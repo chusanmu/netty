@@ -18,11 +18,13 @@ package io.netty.channel;
 /**
  * {@link ChannelHandler} which adds callbacks for state changes. This allows the user
  * to hook in to state changes easily.
+ * TODO: 更多的是被动的方法，被动事件的监听
  */
 public interface ChannelInboundHandler extends ChannelHandler {
 
     /**
      * The {@link Channel} of the {@link ChannelHandlerContext} was registered with its {@link EventLoop}
+     * 注册到selector之后
      */
     void channelRegistered(ChannelHandlerContext ctx) throws Exception;
 
@@ -44,6 +46,7 @@ public interface ChannelInboundHandler extends ChannelHandler {
 
     /**
      * Invoked when the current {@link Channel} has read a message from the peer.
+     * 有读事件时
      */
     void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception;
 
@@ -52,6 +55,7 @@ public interface ChannelInboundHandler extends ChannelHandler {
      * {@link #channelRead(ChannelHandlerContext, Object)}.  If {@link ChannelOption#AUTO_READ} is off, no further
      * attempt to read an inbound data from the current {@link Channel} will be made until
      * {@link ChannelHandlerContext#read()} is called.
+     * 读完之后的一个回调
      */
     void channelReadComplete(ChannelHandlerContext ctx) throws Exception;
 

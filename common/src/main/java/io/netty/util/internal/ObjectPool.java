@@ -36,6 +36,7 @@ public abstract class ObjectPool<T> {
      * Handle for an pooled {@link Object} that will be used to notify the {@link ObjectPool} once it can
      * reuse the pooled {@link Object} again.
      * @param <T>
+     *     TODO:负责回收对象
      */
     public interface Handle<T> {
         /**

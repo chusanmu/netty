@@ -77,6 +77,7 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
     }
 
     private static InternalThreadLocalMap fastGet(FastThreadLocalThread thread) {
+        // TODO: 自己维护了一个ThreadLocalMap
         InternalThreadLocalMap threadLocalMap = thread.threadLocalMap();
         if (threadLocalMap == null) {
             thread.setThreadLocalMap(threadLocalMap = new InternalThreadLocalMap());
@@ -86,7 +87,9 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
 
     private static InternalThreadLocalMap slowGet() {
         ThreadLocal<InternalThreadLocalMap> slowThreadLocalMap = UnpaddedInternalThreadLocalMap.slowThreadLocalMap;
+        // TODO: 通过threadLocal获得一个ThreadLocalMap
         InternalThreadLocalMap ret = slowThreadLocalMap.get();
+        // TODO: 如果为null，就设置值
         if (ret == null) {
             ret = new InternalThreadLocalMap();
             slowThreadLocalMap.set(ret);
@@ -108,6 +111,7 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
     }
 
     public static int nextVariableIndex() {
+        // TODO: 每次自增1
         int index = nextIndex.getAndIncrement();
         if (index < 0) {
             nextIndex.decrementAndGet();

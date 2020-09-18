@@ -219,8 +219,9 @@ public class WebSocketServerProtocolHandler extends WebSocketProtocolHandler {
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
         ChannelPipeline cp = ctx.pipeline();
+        // TODO: 从channelPipeline中拿到WebSocketServerProtocolHandshakeHandler，如果为空，则添加一个
         if (cp.get(WebSocketServerProtocolHandshakeHandler.class) == null) {
-            // Add the WebSocketHandshakeHandler before this one.
+            // Add the WebSocketHandshakeHandler before this one. 添加到pipeline前端啊
             cp.addBefore(ctx.name(), WebSocketServerProtocolHandshakeHandler.class.getName(),
                     new WebSocketServerProtocolHandshakeHandler(serverConfig));
         }

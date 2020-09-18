@@ -66,6 +66,7 @@ public class UnpooledUnsafeDirectByteBuf extends UnpooledDirectByteBuf {
     @Override
     final void setByteBuffer(ByteBuffer buffer, boolean tryFree) {
         super.setByteBuffer(buffer, tryFree);
+        // TODO: 使用JDK底层的方式
         memoryAddress = PlatformDependent.directBufferAddress(buffer);
     }
 

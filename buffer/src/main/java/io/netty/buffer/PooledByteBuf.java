@@ -57,6 +57,7 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
 
     private void init0(PoolChunk<T> chunk, ByteBuffer nioBuffer,
                        long handle, int offset, int length, int maxLength, PoolThreadCache cache) {
+        // TODO: pooledByteBuf进行初始化
         assert handle >= 0;
         assert chunk != null;
 
@@ -75,8 +76,10 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
      * Method must be called before reuse this {@link PooledByteBufAllocator}
      */
     final void reuse(int maxCapacity) {
+        // TODO: 最大扩容
         maxCapacity(maxCapacity);
         resetRefCnt();
+        // TODO: 设置成默认值
         setIndex0(0, 0);
         discardMarks();
     }
@@ -171,6 +174,7 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
             chunk.arena.free(chunk, tmpNioBuf, handle, maxLength, cache);
             tmpNioBuf = null;
             chunk = null;
+            // TODO: 回收到对象池中
             recycle();
         }
     }
@@ -184,6 +188,7 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
     }
 
     final ByteBuffer _internalNioBuffer(int index, int length, boolean duplicate) {
+        // TODO: 把数据塞到JDK底层的ByteBuffer
         index = idx(index);
         ByteBuffer buffer = duplicate ? newInternalNioBuffer(memory) : internalNioBuffer();
         buffer.limit(index + length).position(index);
@@ -229,7 +234,9 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
     @Override
     public final int readBytes(GatheringByteChannel out, int length) throws IOException {
         checkReadableBytes(length);
+        // TODO: 写到JDK底层的Buffer
         int readBytes = out.write(_internalNioBuffer(readerIndex, length, false));
+        // TODO: 向JDK底层写了多少字节
         readerIndex += readBytes;
         return readBytes;
     }

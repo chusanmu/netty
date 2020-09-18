@@ -127,25 +127,34 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         return this;
     }
 
+    /**
+     * TODO: 初始化服务端channel
+     * @param channel
+     */
     @Override
     void init(Channel channel) {
+        // TODO: 配置 channelOptions, ChannelAttrs
         setChannelOptions(channel, newOptionsArray(), logger);
+        // TODO: 可以绑定用户自定义的属性
         setAttributes(channel, attrs0().entrySet().toArray(EMPTY_ATTRIBUTE_ARRAY));
 
+        // TODO: 进行配置服务端pipeline
         ChannelPipeline p = channel.pipeline();
 
         final EventLoopGroup currentChildGroup = childGroup;
         final ChannelHandler currentChildHandler = childHandler;
         final Entry<ChannelOption<?>, Object>[] currentChildOptions;
+        // TODO: 设置childOptions和 childAttrs， 把两值保存起来
         synchronized (childOptions) {
             currentChildOptions = childOptions.entrySet().toArray(EMPTY_OPTION_ARRAY);
         }
         final Entry<AttributeKey<?>, Object>[] currentChildAttrs = childAttrs.entrySet().toArray(EMPTY_ATTRIBUTE_ARRAY);
-
+        // TODO: 开始配置服务端的pipeline
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) {
                 final ChannelPipeline pipeline = ch.pipeline();
+                // TODO: 把用户自定义的handler拿到, 添加到最后
                 ChannelHandler handler = config.handler();
                 if (handler != null) {
                     pipeline.addLast(handler);
@@ -154,7 +163,9 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {
+                        // TODO: 添加连接器(一个特殊的处理器)，用于处理新连接接入
                         pipeline.addLast(new ServerBootstrapAcceptor(
+                                // TODO:  currentChildGroup就是用户自定义的workGroup, currentChildHandler是用户自定义的childHandler,等等
                                 ch, currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
                     }
                 });
@@ -204,17 +215,23 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             };
         }
 
+        /**
+         * TODO: 添加childHandler, 设置options和attrs, 选择NioEventLoop并注册selector
+         * @param ctx
+         * @param msg
+         */
         @Override
         @SuppressWarnings("unchecked")
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
             final Channel child = (Channel) msg;
-
+            // TODO: 添加channelHandler, 实际上是一个channelInitializer
             child.pipeline().addLast(childHandler);
-
+            // TODO: 设置options(根底层TCP读写的参数)和attr(可以自定义一些属性)
             setChannelOptions(child, childOptions, logger);
             setAttributes(child, childAttrs);
 
             try {
+                // TODO: 选择nioEventLoop并注册
                 childGroup.register(child).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {

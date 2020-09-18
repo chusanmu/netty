@@ -21,6 +21,9 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * 数组 + size去实现，提高源生selector性能
+ */
 final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
 
     SelectionKey[] keys;
@@ -35,7 +38,7 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
         if (o == null) {
             return false;
         }
-
+        // TODO: 时间复杂度O(1)
         keys[size++] = o;
         if (size == keys.length) {
             increaseCapacity();

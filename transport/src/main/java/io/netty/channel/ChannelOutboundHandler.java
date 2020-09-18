@@ -19,6 +19,7 @@ import java.net.SocketAddress;
 
 /**
  * {@link ChannelHandler} which will get notified for IO-outbound-operations.
+ * TODO: outBoundHandler顶级接口，更像是用户主动要做的事情，比如，用户去绑定端口，用户write数据出去
  */
 public interface ChannelOutboundHandler extends ChannelHandler {
     /**
@@ -28,6 +29,7 @@ public interface ChannelOutboundHandler extends ChannelHandler {
      * @param localAddress  the {@link SocketAddress} to which it should bound
      * @param promise       the {@link ChannelPromise} to notify once the operation completes
      * @throws Exception    thrown if an error occurs
+     * TODO: 端口绑定
      */
     void bind(ChannelHandlerContext ctx, SocketAddress localAddress, ChannelPromise promise) throws Exception;
 

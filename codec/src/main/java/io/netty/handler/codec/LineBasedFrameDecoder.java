@@ -32,17 +32,30 @@ import java.util.List;
  * byte values for multibyte codepoint representations therefore fully supported by this implementation.
  * <p>
  * For a more general delimiter-based decoder, see {@link DelimiterBasedFrameDecoder}.
+ * TODO: 行解码器
  */
 public class LineBasedFrameDecoder extends ByteToMessageDecoder {
 
     /** Maximum length of a frame we're willing to decode.  */
+    /**
+     * 最大长度
+     */
     private final int maxLength;
     /** Whether or not to throw an exception as soon as we exceed maxLength. */
+    /**
+     * true, 超长 立即抛出异常
+     */
     private final boolean failFast;
+    /**
+     * 解析出来的数据 是否带换行符
+     */
     private final boolean stripDelimiter;
 
     /** True if we're discarding input because we're already over maxLength.  */
     private boolean discarding;
+    /**
+     * 丢弃字节
+     */
     private int discardedBytes;
 
     /** Last scan position. */
@@ -96,21 +109,27 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
      *                          be created.
      */
     protected Object decode(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
+        // TODO: 找行结尾 \n   \r\n
         final int eol = findEndOfLine(buffer);
         if (!discarding) {
+            // TODO: 找到了行结尾符
             if (eol >= 0) {
                 final ByteBuf frame;
                 final int length = eol - buffer.readerIndex();
                 final int delimLength = buffer.getByte(eol) == '\r'? 2 : 1;
 
+                // TODO: 每一行的长度超过了最大长度
                 if (length > maxLength) {
+                    // TODO: 会进行截取
                     buffer.readerIndex(eol + delimLength);
                     fail(ctx, length);
                     return null;
                 }
 
+                // TODO: 是否把分隔符 算进行去
                 if (stripDelimiter) {
                     frame = buffer.readRetainedSlice(length);
+                    // TODO: 跳过分隔符
                     buffer.skipBytes(delimLength);
                 } else {
                     frame = buffer.readRetainedSlice(length + delimLength);
@@ -118,10 +137,15 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
 
                 return frame;
             } else {
+                // TODO: 没找到换行符，非丢弃模式下，没找到换行符
                 final int length = buffer.readableBytes();
+                // TODO: 长度超了
                 if (length > maxLength) {
+                    // TODO: 标记丢弃长度
                     discardedBytes = length;
+                    // TODO: 读指针移动到写指针
                     buffer.readerIndex(buffer.writerIndex());
+                    // TODO: 标记丢弃
                     discarding = true;
                     offset = 0;
                     if (failFast) {
@@ -131,21 +155,28 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
                 return null;
             }
         } else {
+            // TODO: 丢弃模式
             if (eol >= 0) {
                 final int length = discardedBytes + eol - buffer.readerIndex();
+                // TODO: 当前换行符 长度
                 final int delimLength = buffer.getByte(eol) == '\r'? 2 : 1;
+                // TODO: 移动读指针
                 buffer.readerIndex(eol + delimLength);
+                // TODO: 标记
                 discardedBytes = 0;
+                // TODO: 标记非丢弃状态
                 discarding = false;
                 if (!failFast) {
                     fail(ctx, length);
                 }
             } else {
+                // TODO: 丢弃字节 + 可读字节
                 discardedBytes += buffer.readableBytes();
                 buffer.readerIndex(buffer.writerIndex());
                 // We skip everything in the buffer, we need to set the offset to 0 again.
                 offset = 0;
             }
+            // TODO: 最后都是丢弃，直接返回null
             return null;
         }
     }

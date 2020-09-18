@@ -89,6 +89,12 @@ public abstract class SimpleChannelInboundHandler<I> extends ChannelInboundHandl
         return matcher.match(msg);
     }
 
+    /**
+     * 自动释放 ByteBuf
+     * @param ctx
+     * @param msg
+     * @throws Exception
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         boolean release = true;
@@ -96,12 +102,14 @@ public abstract class SimpleChannelInboundHandler<I> extends ChannelInboundHandl
             if (acceptInboundMessage(msg)) {
                 @SuppressWarnings("unchecked")
                 I imsg = (I) msg;
+                // TODO: 模板方法，只需要做自己的业务就可以了，不用考虑释放消息
                 channelRead0(ctx, imsg);
             } else {
                 release = false;
                 ctx.fireChannelRead(msg);
             }
         } finally {
+            // TODO: 这地方厉害了，自动释放ByteBuf
             if (autoRelease && release) {
                 ReferenceCountUtil.release(msg);
             }

@@ -183,18 +183,35 @@ import io.netty.channel.ChannelHandlerContext;
  * +------+--------+------+----------------+      +------+----------------+
  * </pre>
  * @see LengthFieldPrepender
+ *
+ * TODO: 基于长度的解码器啊 重要
  */
 public class LengthFieldBasedFrameDecoder extends ByteToMessageDecoder {
 
     private final ByteOrder byteOrder;
     private final int maxFrameLength;
+    /**
+     * 长度域 offset 偏移量
+     */
     private final int lengthFieldOffset;
+    /**
+     * 数据包 长度 长度域长度
+     */
     private final int lengthFieldLength;
     private final int lengthFieldEndOffset;
+    /**
+     * 长度域长度 + 这个值，真正长度
+     */
     private final int lengthAdjustment;
+    /**
+     * 解析包时，要砍掉的长度
+     */
     private final int initialBytesToStrip;
     private final boolean failFast;
     private boolean discardingTooLongFrame;
+    /**
+     * 当前丢弃字节
+     */
     private long tooLongFrameLength;
     private long bytesToDiscard;
 
@@ -395,37 +412,41 @@ public class LengthFieldBasedFrameDecoder extends ByteToMessageDecoder {
      */
     protected Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
         if (discardingTooLongFrame) {
+            // TODO: 丢弃字节
             discardingTooLongFrame(in);
         }
-
+        // TODO: 判断可读字节数， lengthFieldEndOffset = offset + length 如果比这个都少，那就返回吧 连长度域结尾都没到
         if (in.readableBytes() < lengthFieldEndOffset) {
             return null;
         }
-
+        // TODO: 长度域 绝对位置偏移量
         int actualLengthFieldOffset = in.readerIndex() + lengthFieldOffset;
+        // TODO: 长度域
         long frameLength = getUnadjustedFrameLength(in, actualLengthFieldOffset, lengthFieldLength, byteOrder);
 
         if (frameLength < 0) {
             failOnNegativeLengthField(in, frameLength, lengthFieldEndOffset);
         }
-
+        // TODO: 加上调整的长度
         frameLength += lengthAdjustment + lengthFieldEndOffset;
-
+        // TODO: 数据包 连长度域的值 都没超过
         if (frameLength < lengthFieldEndOffset) {
             failOnFrameLengthLessThanLengthFieldEndOffset(in, frameLength, lengthFieldEndOffset);
         }
-
+        // TODO: 数据包长度过长
         if (frameLength > maxFrameLength) {
+            // TODO: 进入丢弃模式
             exceededFrameLength(in, frameLength);
             return null;
         }
 
         // never overflows because it's less than maxFrameLength
         int frameLengthInt = (int) frameLength;
+        // TODO: 读取可读数据Int
         if (in.readableBytes() < frameLengthInt) {
             return null;
         }
-
+        // TODO: 判断跳过字节，大于了数据域长度
         if (initialBytesToStrip > frameLengthInt) {
             failOnFrameLengthLessThanInitialBytesToStrip(in, frameLength, initialBytesToStrip);
         }
@@ -433,8 +454,11 @@ public class LengthFieldBasedFrameDecoder extends ByteToMessageDecoder {
 
         // extract frame
         int readerIndex = in.readerIndex();
+        // TODO: 实际需要读的字节数
         int actualFrameLength = frameLengthInt - initialBytesToStrip;
+        // TODO: 开始真正的读取 数据请求体
         ByteBuf frame = extractFrame(ctx, in, readerIndex, actualFrameLength);
+        // TODO: 移动指针
         in.readerIndex(readerIndex + actualFrameLength);
         return frame;
     }
@@ -450,6 +474,7 @@ public class LengthFieldBasedFrameDecoder extends ByteToMessageDecoder {
     protected long getUnadjustedFrameLength(ByteBuf buf, int offset, int length, ByteOrder order) {
         buf = buf.order(order);
         long frameLength;
+        // TODO: 妙，根据长度 读取响应类型
         switch (length) {
         case 1:
             frameLength = buf.getUnsignedByte(offset);
@@ -475,6 +500,7 @@ public class LengthFieldBasedFrameDecoder extends ByteToMessageDecoder {
 
     private void failIfNecessary(boolean firstDetectionOfTooLongFrame) {
         if (bytesToDiscard == 0) {
+            // TODO: 进入非丢弃模式
             // Reset to the initial state and tell the handlers that
             // the frame was too large.
             long tooLongFrameLength = this.tooLongFrameLength;

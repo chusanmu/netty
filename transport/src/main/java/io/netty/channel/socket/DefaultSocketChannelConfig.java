@@ -48,6 +48,7 @@ public class DefaultSocketChannelConfig extends DefaultChannelConfig
         this.javaSocket = ObjectUtil.checkNotNull(javaSocket, "javaSocket");
 
         // Enable TCP_NODELAY by default if possible.
+        // TODO: 禁止Nagle算法，nagle算法目的，想让小数据包聚成大数据包 才发出去，netty想要实时性，默认会返回true的，不是android平台
         if (PlatformDependent.canEnableTcpNoDelayByDefault()) {
             try {
                 setTcpNoDelay(true);

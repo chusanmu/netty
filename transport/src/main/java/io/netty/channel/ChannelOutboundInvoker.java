@@ -21,6 +21,9 @@ import io.netty.util.concurrent.FutureListener;
 import java.net.ConnectException;
 import java.net.SocketAddress;
 
+/**
+ * TODO: 传播写事件
+ */
 public interface ChannelOutboundInvoker {
 
     /**

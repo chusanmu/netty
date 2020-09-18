@@ -109,11 +109,19 @@ public final class ChannelOutboundBuffer {
 
     /**
      * Add given message to this {@link ChannelOutboundBuffer}. The given {@link ChannelPromise} will be notified once
-     * the message was written.
+     * the message was written. 插入写队列
+     * TODO: 第n此调用write时
+     *  NULL            []    [n-2]         []
+     *  |                |                  |
+     *  |
+     *  flushedEntry    unflushedEntry      TailEntry
      */
     public void addMessage(Object msg, int size, ChannelPromise promise) {
+        // TODO: msg封装为entry
         Entry entry = Entry.newInstance(msg, size, total(msg), promise);
+        // TODO: 第一次write时，tailEntry为null
         if (tailEntry == null) {
+            // TODO: 表示没有数据flush
             flushedEntry = null;
         } else {
             Entry tail = tailEntry;
@@ -132,6 +140,11 @@ public final class ChannelOutboundBuffer {
     /**
      * Add a flush to this {@link ChannelOutboundBuffer}. This means all previous added messages are marked as flushed
      * and so you will be able to handle them.
+     *  TODO: flush
+     *      *  NULL            []    [n-2]         []
+     *      *  |                |                  |
+     *      *  |
+     *      *unflushedEntry flushedEntry     TailEntry
      */
     public void addFlush() {
         // There is no need to process all entries if there was already a flush before and no new messages
@@ -145,10 +158,12 @@ public final class ChannelOutboundBuffer {
                 flushedEntry = entry;
             }
             do {
+                // TODO: 表示可以flushed多少个对象
                 flushed ++;
                 if (!entry.promise.setUncancellable()) {
                     // Was cancelled so make sure we free up memory and notify about the freed bytes
                     int pending = entry.cancel();
+                    // TODO: 设置可写状态
                     decrementPendingOutboundBytes(pending, false, true);
                 }
                 entry = entry.next;
@@ -173,6 +188,7 @@ public final class ChannelOutboundBuffer {
         }
 
         long newWriteBufferSize = TOTAL_PENDING_SIZE_UPDATER.addAndGet(this, size);
+        // TODO: 写buffer容量不能超过这个配置值  64 * 1024  64K
         if (newWriteBufferSize > channel.config().getWriteBufferHighWaterMark()) {
             setUnwritable(invokeLater);
         }
@@ -192,6 +208,7 @@ public final class ChannelOutboundBuffer {
         }
 
         long newWriteBufferSize = TOTAL_PENDING_SIZE_UPDATER.addAndGet(this, -size);
+        // TODO: 只要小于 32K，就设置channel可写
         if (notifyWritability && newWriteBufferSize < channel.config().getWriteBufferLowWaterMark()) {
             setWritable(invokeLater);
         }
@@ -254,6 +271,7 @@ public final class ChannelOutboundBuffer {
      * messages are ready to be handled.
      */
     public boolean remove() {
+        // TODO: 拿到当前的flushedEntry
         Entry e = flushedEntry;
         if (e == null) {
             clearNioBuffers();
@@ -263,7 +281,7 @@ public final class ChannelOutboundBuffer {
 
         ChannelPromise promise = e.promise;
         int size = e.pendingSize;
-
+        // TODO: 移除当前entry
         removeEntry(e);
 
         if (!e.cancelled) {
@@ -318,12 +336,15 @@ public final class ChannelOutboundBuffer {
     private void removeEntry(Entry e) {
         if (-- flushed == 0) {
             // processed everything
+            // TODO: 表示没有可写的了
             flushedEntry = null;
             if (e == tailEntry) {
+                // TODO: 表示全部标空
                 tailEntry = null;
                 unflushedEntry = null;
             }
         } else {
+            // TODO: 一个个的往后移动
             flushedEntry = e.next;
         }
     }
@@ -585,12 +606,17 @@ public final class ChannelOutboundBuffer {
         return 1 << index;
     }
 
+    /**
+     * 设置channel可写
+     * @param invokeLater
+     */
     private void setWritable(boolean invokeLater) {
         for (;;) {
             final int oldValue = unwritable;
             final int newValue = oldValue & ~1;
             if (UNWRITABLE_UPDATER.compareAndSet(this, oldValue, newValue)) {
                 if (oldValue != 0 && newValue == 0) {
+                    // TODO: 传播写状态改变事件
                     fireChannelWritabilityChanged(invokeLater);
                 }
                 break;
@@ -598,12 +624,18 @@ public final class ChannelOutboundBuffer {
         }
     }
 
+    /**
+     * 设置不可写状态
+     * @param invokeLater
+     */
     private void setUnwritable(boolean invokeLater) {
+        // TODO: 自旋 + CAS
         for (;;) {
             final int oldValue = unwritable;
             final int newValue = oldValue | 1;
             if (UNWRITABLE_UPDATER.compareAndSet(this, oldValue, newValue)) {
                 if (oldValue == 0 && newValue != 0) {
+                    // TODO: 传播当前写状态改变
                     fireChannelWritabilityChanged(invokeLater);
                 }
                 break;

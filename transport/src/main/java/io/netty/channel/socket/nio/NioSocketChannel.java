@@ -98,11 +98,13 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
     /**
      * Create a new instance
      *
-     * @param parent    the {@link Channel} which created this instance or {@code null} if it was created by the user
-     * @param socket    the {@link SocketChannel} which will be used
+     * @param parent the {@link Channel} which created this instance or {@code null} if it was created by the user
+     * @param socket the {@link SocketChannel} which will be used
      */
     public NioSocketChannel(Channel parent, SocketChannel socket) {
+        // TODO: parent为服务端channel, socket为客户端新创建的channel,父类会设置新连接为非阻塞模式
         super(parent, socket);
+        // TODO: 创建NioSocketChannelConfig，会禁止nagle算法，保证小数据包的实时性
         config = new NioSocketChannelConfig(this, socket.socket());
     }
 
@@ -263,6 +265,7 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
             promise.setSuccess();
         }
     }
+
     private void shutdownInput0(final ChannelPromise promise) {
         try {
             shutdownInput0();
@@ -353,6 +356,7 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
     @Override
     protected int doWriteBytes(ByteBuf buf) throws Exception {
         final int expectedWrittenBytes = buf.readableBytes();
+        // TODO: 写到JDK底层的channel
         return buf.readBytes(javaChannel(), expectedWrittenBytes);
     }
 

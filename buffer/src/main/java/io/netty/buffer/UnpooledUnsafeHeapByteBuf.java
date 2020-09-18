@@ -21,6 +21,7 @@ import io.netty.util.internal.PlatformDependent;
  * Big endian Java heap buffer implementation. It is recommended to use
  * {@link UnpooledByteBufAllocator#heapBuffer(int, int)}, {@link Unpooled#buffer(int)} and
  * {@link Unpooled#wrappedBuffer(byte[])} instead of calling the constructor explicitly.
+ * TODO: 通过地址+偏移量拿值
  */
 public class UnpooledUnsafeHeapByteBuf extends UnpooledHeapByteBuf {
 
@@ -47,6 +48,7 @@ public class UnpooledUnsafeHeapByteBuf extends UnpooledHeapByteBuf {
 
     @Override
     protected byte _getByte(int index) {
+        // TODO: 会通过unSafe的方式直接使用底层的方式去取值
         return UnsafeByteBufUtil.getByte(array, index);
     }
 

@@ -270,6 +270,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     @Override
     public ChannelHandlerContext fireExceptionCaught(final Throwable cause) {
+        // TODO: 只拿InboundHandler 然后进行传播下去
         invokeExceptionCaught(findContextInbound(MASK_EXCEPTION_CAUGHT), cause);
         return this;
     }
@@ -299,6 +300,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private void invokeExceptionCaught(final Throwable cause) {
         if (invokeHandler()) {
             try {
+                // TODO: 调用当前handler的exceptionCaught()方法
                 handler().exceptionCaught(this, cause);
             } catch (Throwable error) {
                 if (logger.isDebugEnabled()) {
@@ -315,6 +317,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
                 }
             }
         } else {
+            // TODO: 向下传播
             fireExceptionCaught(cause);
         }
     }
@@ -354,6 +357,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     @Override
     public ChannelHandlerContext fireChannelRead(final Object msg) {
+        // TODO: 会从当前节点，开始往下传播channelRead事件
         invokeChannelRead(findContextInbound(MASK_CHANNEL_READ), msg);
         return this;
     }
@@ -376,8 +380,10 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private void invokeChannelRead(Object msg) {
         if (invokeHandler()) {
             try {
+                // TODO: 向下传播
                 ((ChannelInboundHandler) handler()).channelRead(this, msg);
             } catch (Throwable t) {
+                // TODO: 如果抛出异常，开始执行异常的传播
                 invokeExceptionCaught(t);
             }
         } else {
@@ -714,6 +720,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     private void invokeWrite0(Object msg, ChannelPromise promise) {
         try {
+            // TODO: 这里会回调到用户自定义的方法
             ((ChannelOutboundHandler) handler()).write(this, msg, promise);
         } catch (Throwable t) {
             notifyOutboundHandlerException(t, promise);
@@ -759,9 +766,16 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return promise;
     }
 
+    /**
+     * 从tail节点 开始 往前传播啊
+     * @param msg
+     * @param promise
+     */
     void invokeWriteAndFlush(Object msg, ChannelPromise promise) {
         if (invokeHandler()) {
+            // TODO: 首先write 然后再flush
             invokeWrite0(msg, promise);
+            // TODO: 往前flush, 进行传播
             invokeFlush0();
         } else {
             writeAndFlush(msg, promise);
@@ -780,7 +794,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             ReferenceCountUtil.release(msg);
             throw e;
         }
-
+        // TODO: 会把它前一个节点拿到手
         final AbstractChannelHandlerContext next = findContextOutbound(flush ?
                 (MASK_WRITE | MASK_FLUSH) : MASK_WRITE);
         final Object m = pipeline.touch(msg, next);
@@ -882,10 +896,16 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return ctx;
     }
 
+    /**
+     * TODO: 会不断的循环，寻找前一个节点
+     * @param mask
+     * @return
+     */
     private AbstractChannelHandlerContext findContextOutbound(int mask) {
         AbstractChannelHandlerContext ctx = this;
         EventExecutor currentExecutor = executor();
         do {
+            // TODO: 寻找前一个节点哦
             ctx = ctx.prev;
         } while (skipContext(ctx, currentExecutor, mask, MASK_ONLY_OUTBOUND));
         return ctx;
@@ -947,6 +967,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             }
         } finally {
             // Mark the handler as removed in any case.
+            // TODO: 改变handlerContext状态
             setRemoved();
         }
     }

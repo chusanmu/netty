@@ -40,6 +40,7 @@ import static io.netty.handler.codec.http.HttpVersion.*;
 import static io.netty.util.internal.ObjectUtil.*;
 
 /**
+ * TODO: 处理http握手 升级至 webSocket
  * Handles the HTTP handshake (the HTTP Upgrade request) for {@link WebSocketServerProtocolHandler}.
  */
 class WebSocketServerProtocolHandshakeHandler extends ChannelInboundHandlerAdapter {
@@ -71,7 +72,7 @@ class WebSocketServerProtocolHandshakeHandler extends ChannelInboundHandlerAdapt
                 sendHttpResponse(ctx, req, new DefaultFullHttpResponse(HTTP_1_1, FORBIDDEN, ctx.alloc().buffer(0)));
                 return;
             }
-
+            // TODO: 处理http协议升级至webSocket
             final WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
                     getWebSocketLocation(ctx.pipeline(), req, serverConfig.websocketPath()),
                     serverConfig.subprotocols(), serverConfig.decoderConfig());
@@ -85,9 +86,11 @@ class WebSocketServerProtocolHandshakeHandler extends ChannelInboundHandlerAdapt
                 // before we had a chance to replace it.
                 //
                 // See https://github.com/netty/netty/issues/9471.
+                // TODO: 把这个handshaker放进对应的连接中的attribute中
                 WebSocketServerProtocolHandler.setHandshaker(ctx.channel(), handshaker);
+                // TODO: 然后移除当前的Handler就Ok了
                 ctx.pipeline().remove(this);
-
+                // TODO: 握手 升级
                 final ChannelFuture handshakeFuture = handshaker.handshake(ctx.channel(), req);
                 handshakeFuture.addListener(new ChannelFutureListener() {
                     @Override

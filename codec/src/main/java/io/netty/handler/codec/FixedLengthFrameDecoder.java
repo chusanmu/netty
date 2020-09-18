@@ -37,6 +37,7 @@ import java.util.List;
  * | ABC | DEF | GHI |
  * +-----+-----+-----+
  * </pre>
+ * TODO：固定长度的解码器
  */
 public class FixedLengthFrameDecoder extends ByteToMessageDecoder {
 
@@ -70,6 +71,7 @@ public class FixedLengthFrameDecoder extends ByteToMessageDecoder {
      */
     protected Object decode(
             @SuppressWarnings("UnusedParameters") ChannelHandlerContext ctx, ByteBuf in) throws Exception {
+        // TODO: 可读字节是否小于 frameLength
         if (in.readableBytes() < frameLength) {
             return null;
         } else {

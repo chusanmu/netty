@@ -52,6 +52,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NioServerSocketChannel.class);
 
     private static ServerSocketChannel newSocket(SelectorProvider provider) {
+        // TODO: 通过newSocket创建JDK底层的channel
         try {
             /**
              *  Use the {@link SelectorProvider} to open {@link SocketChannel} and so remove condition in
@@ -86,7 +87,9 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      * Create a new instance using the given {@link ServerSocketChannel}.
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
+        // TODO: 最终调用其父类的构造函数，也就是AbstractNioChannel的构造方法，会进行设置阻塞模式，服务端传进去的事件类型为Accept事件
         super(null, channel, SelectionKey.OP_ACCEPT);
+        // TODO: 创建TCP参数配置类,把jdk的serverSocket传进去
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
     }
 
@@ -130,6 +133,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     @SuppressJava6Requirement(reason = "Usage guarded by java version check")
     @Override
     protected void doBind(SocketAddress localAddress) throws Exception {
+        // TODO: 调用JDK底层绑定端口号
         if (PlatformDependent.javaVersion() >= 7) {
             javaChannel().bind(localAddress, config.getBacklog());
         } else {
@@ -144,10 +148,12 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
 
     @Override
     protected int doReadMessages(List<Object> buf) throws Exception {
+        // TODO: 新连接接入 获取JDK底层的channel.
         SocketChannel ch = SocketUtils.accept(javaChannel());
 
         try {
             if (ch != null) {
+                // TODO: 封装成Netty里面的NioSocketChannel
                 buf.add(new NioSocketChannel(this, ch));
                 return 1;
             }

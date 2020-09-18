@@ -39,6 +39,7 @@ import static io.netty.channel.internal.ChannelUtils.WRITE_STATUS_SNDBUF_FULL;
 
 /**
  * {@link AbstractNioChannel} base class for {@link Channel}s that operate on bytes.
+ * TODO: 客户端channel抽象
  */
 public abstract class AbstractNioByteChannel extends AbstractNioChannel {
     private static final ChannelMetadata METADATA = new ChannelMetadata(false, 16);
@@ -63,6 +64,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
      * @param ch                the underlying {@link SelectableChannel} on which it operates
      */
     protected AbstractNioByteChannel(Channel parent, SelectableChannel ch) {
+        // TODO: 这里可以看出，新连接注册OP_READ事件， 调用父类为AbstractNioChannel设置新连接进来的channel非阻塞
         super(parent, ch, SelectionKey.OP_READ);
     }
 
@@ -212,15 +214,18 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
     private int doWriteInternal(ChannelOutboundBuffer in, Object msg) throws Exception {
         if (msg instanceof ByteBuf) {
             ByteBuf buf = (ByteBuf) msg;
+            // TODO: 如果没有可写的
             if (!buf.isReadable()) {
                 in.remove();
                 return 0;
             }
-
+            // TODO: localFlushedAmount表示 写JDK底层写了多少字节
             final int localFlushedAmount = doWriteBytes(buf);
             if (localFlushedAmount > 0) {
                 in.progress(localFlushedAmount);
+                // TODO: 表示buf完全被写到底层Buffer中
                 if (!buf.isReadable()) {
+                    // TODO: 写完了remove掉
                     in.remove();
                 }
                 return 1;
@@ -250,6 +255,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
     @Override
     protected void doWrite(ChannelOutboundBuffer in) throws Exception {
         int writeSpinCount = config().getWriteSpinCount();
+        // TODO: 遍历buffer队列，过滤ByteBuf 进行自旋写
         do {
             Object msg = in.current();
             if (msg == null) {
@@ -266,6 +272,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
 
     @Override
     protected final Object filterOutboundMessage(Object msg) {
+        // TODO: ByteBuf  direct化
         if (msg instanceof ByteBuf) {
             ByteBuf buf = (ByteBuf) msg;
             if (buf.isDirect()) {

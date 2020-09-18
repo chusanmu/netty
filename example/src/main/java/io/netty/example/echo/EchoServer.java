@@ -55,6 +55,7 @@ public final class EchoServer {
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
+                    // TODO: 最终通过反射的方式，创建出来对应的实例
              .channel(NioServerSocketChannel.class)
              .option(ChannelOption.SO_BACKLOG, 100)
              .handler(new LoggingHandler(LogLevel.INFO))
@@ -70,7 +71,7 @@ public final class EchoServer {
                  }
              });
 
-            // Start the server.
+            // Start the server. TODO: bind, 通过反射 创建jdk底层channel, 创建tcp参数配置类，初始化id, pipeline, unsafe等，然后设置服务端channel非阻塞
             ChannelFuture f = b.bind(PORT).sync();
 
             // Wait until the server socket is closed.

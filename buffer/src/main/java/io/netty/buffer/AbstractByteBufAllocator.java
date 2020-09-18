@@ -170,6 +170,7 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
 
     @Override
     public ByteBuf directBuffer() {
+        // TODO: DEFAULT_INITIAL_CAPACITY 默认容量，DEFAULT_MAX_CAPACITY 最大扩充容量
         return directBuffer(DEFAULT_INITIAL_CAPACITY, DEFAULT_MAX_CAPACITY);
     }
 
@@ -234,6 +235,7 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
 
     /**
      * Create a heap {@link ByteBuf} with the given initialCapacity and maxCapacity.
+     * 创建heapBuffer啊
      */
     protected abstract ByteBuf newHeapBuffer(int initialCapacity, int maxCapacity);
 

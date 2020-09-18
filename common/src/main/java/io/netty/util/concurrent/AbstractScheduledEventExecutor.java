@@ -252,9 +252,11 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     }
 
     private <V> ScheduledFuture<V> schedule(final ScheduledFutureTask<V> task) {
+        // TODO: 是否是当前NioEventLoop发起的
         if (inEventLoop()) {
             scheduleFromEventLoop(task);
         } else {
+            // TODO: 如果是外部线程，最终会把它丢到taskQueue中执行
             final long deadlineNanos = task.deadlineNanos();
             // task will add itself to scheduled task queue when run if not expired
             if (beforeScheduledTaskSubmitted(deadlineNanos)) {

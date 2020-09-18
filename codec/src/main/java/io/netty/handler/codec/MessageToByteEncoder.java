@@ -95,23 +95,36 @@ public abstract class MessageToByteEncoder<I> extends ChannelOutboundHandlerAdap
         return matcher.match(msg);
     }
 
+    /**
+     * TODO: 到这里会进行编码 然后继续往下写
+     * @param ctx
+     * @param msg
+     * @param promise
+     * @throws Exception
+     */
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         ByteBuf buf = null;
         try {
+            // TODO: 判断encode是否能处理这个对象， 其实就是判断泛型类型
             if (acceptOutboundMessage(msg)) {
                 @SuppressWarnings("unchecked")
                 I cast = (I) msg;
+                // TODO: 内存分配， 默认堆外内存
                 buf = allocateBuffer(ctx, cast, preferDirect);
                 try {
+                    // TODO: 模板方法，编码方法，编码byte进buf
                     encode(ctx, cast, buf);
                 } finally {
+                    // TODO: 释放内存 释放原始对象
                     ReferenceCountUtil.release(cast);
                 }
 
+                // TODO: 把编码好了的 buf 往前扔，扔给HeadContext去写出
                 if (buf.isReadable()) {
                     ctx.write(buf, promise);
                 } else {
+                    // TODO: 如果是不可读的，则释放下，传个空的buffer
                     buf.release();
                     ctx.write(Unpooled.EMPTY_BUFFER, promise);
                 }
@@ -136,9 +149,11 @@ public abstract class MessageToByteEncoder<I> extends ChannelOutboundHandlerAdap
      */
     protected ByteBuf allocateBuffer(ChannelHandlerContext ctx, @SuppressWarnings("unused") I msg,
                                boolean preferDirect) throws Exception {
+        // TODO: 堆外内存
         if (preferDirect) {
             return ctx.alloc().ioBuffer();
         } else {
+            // TODO: 堆内内存
             return ctx.alloc().heapBuffer();
         }
     }

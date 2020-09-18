@@ -44,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Abstract base class for {@link Channel} implementations which use a Selector based approach.
+ * TODO: 提供selector去轮询IO事件
  */
 public abstract class AbstractNioChannel extends AbstractChannel {
 
@@ -51,6 +52,9 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             InternalLoggerFactory.getInstance(AbstractNioChannel.class);
 
     private final SelectableChannel ch;
+    /**
+     * TODO: 创建nioChannel的时候，会进行传参，服务端是Acceptor事件，客户端是Read事件
+     */
     protected final int readInterestOp;
     volatile SelectionKey selectionKey;
     boolean readPending;
@@ -77,10 +81,12 @@ public abstract class AbstractNioChannel extends AbstractChannel {
      * @param readInterestOp    the ops to set to receive data from the {@link SelectableChannel}
      */
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
+        // TODO: 首先调用父类的构造函数
         super(parent);
         this.ch = ch;
         this.readInterestOp = readInterestOp;
         try {
+            // TODO: 服务端channel设置为非阻塞模式
             ch.configureBlocking(false);
         } catch (IOException e) {
             try {
@@ -377,6 +383,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         boolean selected = false;
         for (;;) {
             try {
+                // TODO: 调用JDK底层的channel注册selector, 第二个参数，注册时关心事件 0 表示不关心任何事件
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
                 return;
             } catch (CancelledKeyException e) {
@@ -399,18 +406,25 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         eventLoop().cancel(selectionKey());
     }
 
+    /**
+     * TODO: 这时候服务端端口已经绑定成功了，需要再添加一个新的事件，接受客户端请求啊
+     * @throws Exception
+     */
     @Override
     protected void doBeginRead() throws Exception {
         // Channel.read() or ChannelHandlerContext.read() was called
+        // TODO: 拿到selectionKey
         final SelectionKey selectionKey = this.selectionKey;
         if (!selectionKey.isValid()) {
             return;
         }
 
         readPending = true;
-
+        // TODO: 拿到感兴趣的事件，这里最终返回0, 注册的时候填的0
         final int interestOps = selectionKey.interestOps();
         if ((interestOps & readInterestOp) == 0) {
+            // TODO: 服务端时：重新注册感兴趣的事件，刚开始没注册，readInterestOp实际上就是OP_ACCEPT事件， 可以读了，其实对于服务端而言就是读取客户端连接
+            // TODO: 客户端时：重新注册感兴趣的事件，刚开始也没注册，readInterestOp实际上是OP_READ事件。
             selectionKey.interestOps(interestOps | readInterestOp);
         }
     }

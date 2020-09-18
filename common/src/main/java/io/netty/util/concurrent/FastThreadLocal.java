@@ -125,6 +125,7 @@ public class FastThreadLocal<V> {
     private final int index;
 
     public FastThreadLocal() {
+        // TODO: 每个fastThreadLocal都有个index
         index = InternalThreadLocalMap.nextVariableIndex();
     }
 
@@ -163,6 +164,7 @@ public class FastThreadLocal<V> {
      */
     @SuppressWarnings("unchecked")
     public final V get(InternalThreadLocalMap threadLocalMap) {
+        // TODO: index当前的threadLocal在JVM中的唯一索引
         Object v = threadLocalMap.indexedVariable(index);
         if (v != InternalThreadLocalMap.UNSET) {
             return (V) v;

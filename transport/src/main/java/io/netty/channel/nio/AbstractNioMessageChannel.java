@@ -31,6 +31,7 @@ import java.util.List;
 
 /**
  * {@link AbstractNioChannel} base class for {@link Channel}s that operate on messages.
+ * 服务端Channel抽象
  */
 public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
     boolean inputShutdown;
@@ -71,9 +72,12 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
             Throwable exception = null;
             try {
                 try {
+                    // TODO: do while 循环处理
                     do {
+                        // TODO: 会用Jdk创建底层 新建立的子连接(客户端) channel
                         int localRead = doReadMessages(readBuf);
                         if (localRead == 0) {
+                            // TODO: 没有读到新连接，直接break掉
                             break;
                         }
                         if (localRead < 0) {
@@ -82,14 +86,17 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                         }
 
                         allocHandle.incMessagesRead(localRead);
+                        // TODO: 默认情况下 一次性读取16个连接
                     } while (allocHandle.continueReading());
                 } catch (Throwable t) {
                     exception = t;
                 }
 
                 int size = readBuf.size();
+                // TODO: 进行遍历客户端channel, 然后触发channelRead事件
                 for (int i = 0; i < size; i ++) {
                     readPending = false;
+                    // TODO: 会触发ServerBootstrapAcceptor的channelRead方法
                     pipeline.fireChannelRead(readBuf.get(i));
                 }
                 readBuf.clear();

@@ -39,6 +39,9 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
 
     private final ByteBufAllocator alloc;
 
+    /**
+     * 依赖JDK底层的buffer, 这里实际是DirectByteBuffer
+     */
     ByteBuffer buffer; // accessed by UnpooledUnsafeNoCleanerDirectByteBuf.reallocateDirect()
     private ByteBuffer tmpNioBuf;
     private int capacity;
@@ -101,6 +104,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
      * Allocate a new direct {@link ByteBuffer} with the given initialCapacity.
      */
     protected ByteBuffer allocateDirect(int initialCapacity) {
+        // TODO: 直接使用JDK的ByteBuffer申请直接内存
         return ByteBuffer.allocateDirect(initialCapacity);
     }
 
@@ -112,6 +116,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
     }
 
     void setByteBuffer(ByteBuffer buffer, boolean tryFree) {
+        // TODO: 对buffer进行保存
         if (tryFree) {
             ByteBuffer oldBuffer = this.buffer;
             if (oldBuffer != null) {

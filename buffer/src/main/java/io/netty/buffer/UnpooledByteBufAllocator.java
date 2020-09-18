@@ -79,6 +79,7 @@ public final class UnpooledByteBufAllocator extends AbstractByteBufAllocator imp
 
     @Override
     protected ByteBuf newHeapBuffer(int initialCapacity, int maxCapacity) {
+        // TODO: 是否是unSafe的 netty去帮我们判断了,如果有unSafe对象，则创建unsafe的
         return PlatformDependent.hasUnsafe() ?
                 new InstrumentedUnpooledUnsafeHeapByteBuf(this, initialCapacity, maxCapacity) :
                 new InstrumentedUnpooledHeapByteBuf(this, initialCapacity, maxCapacity);

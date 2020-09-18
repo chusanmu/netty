@@ -20,6 +20,9 @@ import io.netty.util.internal.ObjectUtil;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
+/**
+ * TODO: 每次执行任务的时候，都会创建一个线程
+ */
 public final class ThreadPerTaskExecutor implements Executor {
     private final ThreadFactory threadFactory;
 
@@ -29,6 +32,7 @@ public final class ThreadPerTaskExecutor implements Executor {
 
     @Override
     public void execute(Runnable command) {
+        // TODO: 都会创建一个线程，把任务扔进去
         threadFactory.newThread(command).start();
     }
 }

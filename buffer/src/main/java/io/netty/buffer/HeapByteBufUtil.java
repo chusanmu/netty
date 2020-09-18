@@ -21,6 +21,7 @@ package io.netty.buffer;
 final class HeapByteBufUtil {
 
     static byte getByte(byte[] memory, int index) {
+        // TODO: 直接通过数组加 角标取
         return memory[index];
     }
 

@@ -72,6 +72,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             throw new IllegalArgumentException(String.format("nThreads: %d (expected: > 0)", nThreads));
         }
 
+        // TODO: 创建线程创建器
         if (executor == null) {
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
@@ -81,6 +82,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
+                // TODO: 保存线程执行器ThreadPerTaskExecutor, 创建一个TaskQueue, 创建一个selector
                 children[i] = newChild(executor, args);
                 success = true;
             } catch (Exception e) {
@@ -107,7 +109,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
                 }
             }
         }
-
+        // TODO: 创建选择器, 给新连接绑定eventLoop
         chooser = chooserFactory.newChooser(children);
 
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {
@@ -134,6 +136,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
 
     @Override
     public EventExecutor next() {
+        // TODO: 每次都会选择一个nioEventLoop
         return chooser.next();
     }
 

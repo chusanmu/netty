@@ -179,12 +179,14 @@ public interface ChannelHandler {
 
     /**
      * Gets called after the {@link ChannelHandler} was added to the actual context and it's ready to handle events.
+     * TODO: handler被添加到ChannelPipeline中时 会进行回调
      */
     void handlerAdded(ChannelHandlerContext ctx) throws Exception;
 
     /**
      * Gets called after the {@link ChannelHandler} was removed from the actual context and it doesn't handle events
      * anymore.
+     * TODO: handler被移除的时候 会进行回调
      */
     void handlerRemoved(ChannelHandlerContext ctx) throws Exception;
 
@@ -193,6 +195,7 @@ public interface ChannelHandler {
      *
      * @deprecated if you want to handle this event you should implement {@link ChannelInboundHandler} and
      * implement the method there.
+     * 出现异常时回调
      */
     @Deprecated
     void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception;

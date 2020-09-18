@@ -534,6 +534,7 @@ final class PlatformDependent0 {
     }
 
     static byte getByte(byte[] data, int index) {
+        // TODO: 通过UNSAFE对象去取
         return UNSAFE.getByte(data, BYTE_ARRAY_BASE_OFFSET + index);
     }
 

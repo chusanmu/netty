@@ -43,6 +43,11 @@ import static io.netty.util.internal.ObjectUtil.checkPositiveOrZero;
 
 /**
  * A skeletal implementation of a buffer.
+ * 一些基本骨架的实现
+ * Pooled(池化，从预先分配好的内存取) 和 Unpooled(直接调用系统Api,向操作系统申请内存)
+ * Unsafe(可以通过JDK底层的unSafe直接拿到byteBuf，在jvm中的内存) 和 非Unsafe(不会依赖JDK底层unSafe对象)
+ * Heap(在堆上分配，受GC管控) 和 Direct(不受JVM管控，不受GC影响)
+ *
  */
 public abstract class AbstractByteBuf extends ByteBuf {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractByteBuf.class);
@@ -67,6 +72,8 @@ public abstract class AbstractByteBuf extends ByteBuf {
 
     static final ResourceLeakDetector<ByteBuf> leakDetector =
             ResourceLeakDetectorFactory.instance().newResourceLeakDetector(ByteBuf.class);
+
+    /* ---------------- 保存一些读写指针 -------------- */
 
     int readerIndex;
     int writerIndex;
@@ -173,6 +180,8 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return capacity() - writerIndex >= numBytes;
     }
 
+
+    /* ---------------- 一些通用方法的实现 -------------- */
     @Override
     public int readableBytes() {
         return writerIndex - readerIndex;
@@ -1073,6 +1082,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
     public ByteBuf writeBytes(byte[] src, int srcIndex, int length) {
         ensureWritable(length);
         setBytes(writerIndex, src, srcIndex, length);
+        // TODO: 写指针 增加指定长度
         writerIndex += length;
         return this;
     }

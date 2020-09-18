@@ -32,9 +32,11 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
     @SuppressWarnings("unchecked")
     @Override
     public EventExecutorChooser newChooser(EventExecutor[] executors) {
+        // TODO: 判断nioEventLoop个数是否是2的幂
         if (isPowerOfTwo(executors.length)) {
             return new PowerOfTwoEventExecutorChooser(executors);
         } else {
+            // TODO: 返回一个普通的，返回一个角标
             return new GenericEventExecutorChooser(executors);
         }
     }
@@ -51,6 +53,10 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
             this.executors = executors;
         }
 
+        /**
+         * 如果是2的幂  & 是有优化的效果的
+         * @return
+         */
         @Override
         public EventExecutor next() {
             return executors[idx.getAndIncrement() & executors.length - 1];
@@ -65,6 +71,11 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
             this.executors = executors;
         }
 
+
+        /**
+         * 直接自增，取模，就好了
+         * @return
+         */
         @Override
         public EventExecutor next() {
             return executors[Math.abs(idx.getAndIncrement() % executors.length)];

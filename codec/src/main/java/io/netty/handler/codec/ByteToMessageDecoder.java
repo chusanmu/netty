@@ -86,6 +86,7 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
                 return in;
             }
             try {
+                // TODO: 容量不够则进行扩容
                 final int required = in.readableBytes();
                 if (required > cumulation.maxWritableBytes() ||
                         (required > cumulation.maxFastWritableBytes() && cumulation.refCnt() > 1) ||
@@ -267,12 +268,15 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        // TODO: 基于ByteBuf进行解码
         if (msg instanceof ByteBuf) {
             CodecOutputList out = CodecOutputList.newInstance();
             try {
                 first = cumulation == null;
+                // TODO: 第一次从IO流中读取数据，不是第一次就进行累加， msg 塞进 cumlation
                 cumulation = cumulator.cumulate(ctx.alloc(),
                         first ? Unpooled.EMPTY_BUFFER : cumulation, (ByteBuf) msg);
+                // TODO: 调用decode方法进行解析
                 callDecode(ctx, cumulation, out);
             } catch (DecoderException e) {
                 throw e;
@@ -418,11 +422,15 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
      */
     protected void callDecode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         try {
+            // TODO: 只要累加器里面有数据
             while (in.isReadable()) {
                 int outSize = out.size();
 
+                // TODO: list是否有值
                 if (outSize > 0) {
+                    // TODO: 将子类解析出来的ByteBuf, 有值了向下传播啊
                     fireChannelRead(ctx, out, outSize);
+                    // TODO: 然后清空下list
                     out.clear();
 
                     // Check if this handler was removed before continuing with decoding.
@@ -435,7 +443,7 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
                     }
                     outSize = 0;
                 }
-
+                // TODO: 记录可读长度
                 int oldInputLength = in.readableBytes();
                 decodeRemovalReentryProtection(ctx, in, out);
 
@@ -447,14 +455,16 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
                     break;
                 }
 
+                // TODO: 什么都没解析出来
                 if (outSize == out.size()) {
+                    // TODO: 没有足够的数据包
                     if (oldInputLength == in.readableBytes()) {
                         break;
                     } else {
                         continue;
                     }
                 }
-
+                // TODO: 读到了数据，但是没从in 里面解析啊，有问题
                 if (oldInputLength == in.readableBytes()) {
                     throw new DecoderException(
                             StringUtil.simpleClassName(getClass()) +
@@ -481,6 +491,7 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
      * @param in            the {@link ByteBuf} from which to read data
      * @param out           the {@link List} to which decoded messages should be added
      * @throws Exception    is thrown if an error occurs
+     * TODO: 把读到的所有的数据，解析的对象放到out中
      */
     protected abstract void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception;
 

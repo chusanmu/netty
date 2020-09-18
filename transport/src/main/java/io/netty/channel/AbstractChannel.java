@@ -67,11 +67,15 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      *
      * @param parent
      *        the parent of this channel. {@code null} if there's no parent.
+     *        客户端channel和服务端channel 共同都会进此构造器
      */
     protected AbstractChannel(Channel parent) {
         this.parent = parent;
+        // TODO: 每个channel的唯一标识
         id = newId();
+        // TODO: 底层TCP读写依靠类
         unsafe = newUnsafe();
+        // TODO: 创建channelPipeline，很重要
         pipeline = newChannelPipeline();
     }
 
@@ -281,6 +285,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
     @Override
     public ChannelFuture write(Object msg) {
+        // TODO: channel委托pipeline去写出数据
         return pipeline.write(msg);
     }
 
@@ -461,7 +466,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                         new IllegalStateException("incompatible event loop type: " + eventLoop.getClass().getName()));
                 return;
             }
-
+            // TODO: 绑定线程，告诉channel，后续所有的IO事件都交给 我这个eventLoop去实现就OK了
             AbstractChannel.this.eventLoop = eventLoop;
 
             if (eventLoop.inEventLoop()) {
@@ -485,6 +490,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
         }
 
+        /**
+         * 客户端channel和服务端channel都会进行register0();
+         * @param promise
+         */
         private void register0(ChannelPromise promise) {
             try {
                 // check if the channel is still open as it could be closed in the mean time when the register
@@ -493,18 +502,22 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
+                // TODO: 调用JDK底层注册selector
                 doRegister();
                 neverRegistered = false;
                 registered = true;
 
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
+                // TODO: 触发handler Added事件
                 pipeline.invokeHandlerAddedIfNeeded();
 
                 safeSetSuccess(promise);
+                // TODO: 触发channelRegistered事件
                 pipeline.fireChannelRegistered();
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.
+                // TODO: 注册selector时，这里返回的是false
                 if (isActive()) {
                     if (firstRegistration) {
                         pipeline.fireChannelActive();
@@ -544,7 +557,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                         "is not bound to a wildcard address; binding to a non-wildcard " +
                         "address (" + localAddress + ") anyway as requested.");
             }
-
+            // TODO: 服务端启动的时候 wasActive为false
             boolean wasActive = isActive();
             try {
                 doBind(localAddress);
@@ -553,8 +566,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 closeIfClosed();
                 return;
             }
-
+            // TODO: 如果绑定之前为false， 之后为true了，开始传播channelActive事件
             if (!wasActive && isActive()) {
+                // TODO: 端口绑定成功传播chanelActive事件
                 invokeLater(new Runnable() {
                     @Override
                     public void run() {
@@ -840,6 +854,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
 
             try {
+                // TODO: 向selector注册Acceptor事件
                 doBeginRead();
             } catch (final Exception e) {
                 invokeLater(new Runnable() {
@@ -852,10 +867,14 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
         }
 
+        /**
+         * TODO: 写buffer队列
+         * @param msg
+         * @param promise
+         */
         @Override
         public final void write(Object msg, ChannelPromise promise) {
             assertEventLoop();
-
             ChannelOutboundBuffer outboundBuffer = this.outboundBuffer;
             if (outboundBuffer == null) {
                 // If the outboundBuffer is null we know the channel was closed and so
@@ -870,6 +889,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             int size;
             try {
+                // TODO: buffer  ->  direct化, 非堆外内存 转为 堆外内存
                 msg = filterOutboundMessage(msg);
                 size = pipeline.estimatorHandle().size(msg);
                 if (size < 0) {
@@ -880,7 +900,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 ReferenceCountUtil.release(msg);
                 return;
             }
-
+            // TODO: 插入写队列，堆外内存，插入outboundBuffer 写缓冲区中
             outboundBuffer.addMessage(msg, size, promise);
         }
 

@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
+ * TODO: 继承了 JUC包下的future
  * The result of an asynchronous operation.
  */
 @SuppressWarnings("ClassNameSameAsAncestorName")

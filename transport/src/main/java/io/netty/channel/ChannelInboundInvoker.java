@@ -15,6 +15,9 @@
  */
 package io.netty.channel;
 
+/**
+ * TODO: inBound事件的传播接口
+ */
 public interface ChannelInboundInvoker {
 
     /**
