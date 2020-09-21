@@ -75,6 +75,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     }
 
     /**
+     * TODO: 设置线程组
      * Set the {@link EventLoopGroup} for the parent (acceptor) and the child (client). These
      * {@link EventLoopGroup}'s are used to handle all the events and IO for {@link ServerChannel} and
      * {@link Channel}'s.
@@ -150,6 +151,10 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         }
         final Entry<AttributeKey<?>, Object>[] currentChildAttrs = childAttrs.entrySet().toArray(EMPTY_ATTRIBUTE_ARRAY);
         // TODO: 开始配置服务端的pipeline
+        // TODO: 这里的addLast需要注意，这里的添加时机属于 channel还没有注册到eventLoop上面，同时也没有注册到selector上面，所以当addLast添加handler的时候
+        // TODO: 会被包成一个task，等到register之后，才会去执行
+        // TODO: @see io.netty.channel.DefaultChannelPipeline.invokeHandlerAddedIfNeeded
+        // TODO: 这里不会执行handlerAdd事件回调，因为Channel还没有注册到eventLoop上面
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) {
@@ -186,6 +191,9 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         return this;
     }
 
+    /**
+     * TODO: 处理新连接接入
+     */
     private static class ServerBootstrapAcceptor extends ChannelInboundHandlerAdapter {
 
         private final EventLoopGroup childGroup;
@@ -225,13 +233,14 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
             final Channel child = (Channel) msg;
             // TODO: 添加channelHandler, 实际上是一个channelInitializer
+            // TODO: 为每个新连接channel，添加childHandler
             child.pipeline().addLast(childHandler);
             // TODO: 设置options(根底层TCP读写的参数)和attr(可以自定义一些属性)
             setChannelOptions(child, childOptions, logger);
             setAttributes(child, childAttrs);
 
             try {
-                // TODO: 选择nioEventLoop并注册
+                // TODO: 选择nioEventLoop并注册, 然后添加了一个listener, 如果失败了的话，就强制关闭
                 childGroup.register(child).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {

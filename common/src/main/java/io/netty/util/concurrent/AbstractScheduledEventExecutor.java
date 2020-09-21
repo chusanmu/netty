@@ -43,6 +43,9 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
        public void run() { } // Do nothing
     };
 
+    /**
+     * TODO: 当前eventExecutor 维护的 优先级调度队列
+     */
     PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue;
 
     long nextTaskId;
@@ -77,34 +80,44 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     }
 
     PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue() {
+        // TODO: 获取scheduledTaskQueue 如果为空，会创建出来一个默认的
         if (scheduledTaskQueue == null) {
             scheduledTaskQueue = new DefaultPriorityQueue<ScheduledFutureTask<?>>(
                     SCHEDULED_FUTURE_TASK_COMPARATOR,
                     // Use same initial capacity as java.util.PriorityQueue
                     11);
         }
+        // TODO: 返回scheduledTaskQueue
         return scheduledTaskQueue;
     }
 
+    /**
+     * 判断队列是否为空
+     *
+     * @param queue
+     * @return
+     */
     private static boolean isNullOrEmpty(Queue<ScheduledFutureTask<?>> queue) {
         return queue == null || queue.isEmpty();
     }
 
     /**
+     * TODO: 取消 优先级队列中的所有的任务
      * Cancel all scheduled tasks.
      *
      * This method MUST be called only when {@link #inEventLoop()} is {@code true}.
      */
     protected void cancelScheduledTasks() {
         assert inEventLoop();
+        // TODO: 如果队列为空 直接返回
         PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue;
         if (isNullOrEmpty(scheduledTaskQueue)) {
             return;
         }
-
+        // TODO: 否则直接转为数组，然后进行遍历
         final ScheduledFutureTask<?>[] scheduledTasks =
                 scheduledTaskQueue.toArray(new ScheduledFutureTask<?>[0]);
-
+        // TODO: 遍历所有的tasks, 然后进行取消
         for (ScheduledFutureTask<?> task: scheduledTasks) {
             task.cancelWithoutRemove(false);
         }
@@ -125,11 +138,12 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
      */
     protected final Runnable pollScheduledTask(long nanoTime) {
         assert inEventLoop();
-
+        // TODO: 从队列中 弹出来一个task
         ScheduledFutureTask<?> scheduledTask = peekScheduledTask();
         if (scheduledTask == null || scheduledTask.deadlineNanos() - nanoTime > 0) {
             return null;
         }
+        // TODO: 移除一个元素
         scheduledTaskQueue.remove();
         scheduledTask.setConsumed();
         return scheduledTask;
@@ -260,6 +274,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
             final long deadlineNanos = task.deadlineNanos();
             // task will add itself to scheduled task queue when run if not expired
             if (beforeScheduledTaskSubmitted(deadlineNanos)) {
+                // TODO: 执行任务
                 execute(task);
             } else {
                 lazyExecute(task);

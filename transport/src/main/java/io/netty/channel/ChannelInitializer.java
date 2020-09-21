@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * TODO: 一个特殊的channelInboundHandler,提供了一个简单的方式去初始化 一个channel, 通过它来引导添加channelHandler
  * A special {@link ChannelInboundHandler} which offers an easy way to initialize a {@link Channel} once it was
  * registered to its {@link EventLoop}.
  *
@@ -56,6 +57,9 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ChannelInitializer.class);
     // We use a Set as a ChannelInitializer is usually shared between all Channels in a Bootstrap /
     // ServerBootstrap. This way we can reduce the memory usage compared to use Attributes.
+    /**
+     *  TODO: 用来存放所有的添加的 ChannelHandlerContext
+     */
     private final Set<ChannelHandlerContext> initMap = Collections.newSetFromMap(
             new ConcurrentHashMap<ChannelHandlerContext, Boolean>());
 
@@ -70,11 +74,17 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
      */
     protected abstract void initChannel(C ch) throws Exception;
 
+    /**
+     * TODO: 当触发channelRegistered事件时，进行回调
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     @SuppressWarnings("unchecked")
     public final void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         // Normally this method will never be called as handlerAdded(...) should call initChannel(...) and remove
         // the handler.
+        // TODO: 执行此方法
         if (initChannel(ctx)) {
             // we called initChannel(...) so we need to call now pipeline.fireChannelRegistered() to ensure we not
             // miss an event.
@@ -125,16 +135,19 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
 
     @SuppressWarnings("unchecked")
     private boolean initChannel(ChannelHandlerContext ctx) throws Exception {
+        // TODO: 如果已经添加过了，这里会返回false, 否则添加进去，返回true
         if (initMap.add(ctx)) { // Guard against re-entrance.
             try {
-                // TODO: 这里调用 我们自己实现的initChannel
+                // TODO: 这里是一个抽象方法，调用 我们自己实现的initChannel
                 initChannel((C) ctx.channel());
             } catch (Throwable cause) {
                 // Explicitly call exceptionCaught(...) as we removed the handler before calling initChannel(...).
                 // We do so to prevent multiple calls to initChannel(...).
                 exceptionCaught(ctx, cause);
             } finally {
+                // TODO: 拿到channelPipeline
                 ChannelPipeline pipeline = ctx.pipeline();
+                // TODO: 如果遍历完了整个pipeline 发现自己还存在, 那就把它自己给移除掉
                 if (pipeline.context(this) != null) {
                     // TODO: 最后把自己移除
                     pipeline.remove(this);

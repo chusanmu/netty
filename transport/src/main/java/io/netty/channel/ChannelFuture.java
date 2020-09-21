@@ -161,27 +161,44 @@ import java.util.concurrent.TimeUnit;
  *     // Connection established successfully
  * }
  * </pre>
+ * TODO: 和channel有关的future
  */
 public interface ChannelFuture extends Future<Void> {
 
     /**
+     * TODO: 获得一个IO操作关联的channel
      * Returns a channel where the I/O operation associated with this
      * future takes place.
      */
     Channel channel();
 
+    /**
+     * TODO: 添加一个Listener，然后返回当前的ChannelFuture
+     * @param listener
+     * @return
+     */
     @Override
     ChannelFuture addListener(GenericFutureListener<? extends Future<? super Void>> listener);
 
     @Override
     ChannelFuture addListeners(GenericFutureListener<? extends Future<? super Void>>... listeners);
 
+    /**
+     * TODO：移除一个listener
+     * @param listener
+     * @return
+     */
     @Override
     ChannelFuture removeListener(GenericFutureListener<? extends Future<? super Void>> listener);
 
     @Override
     ChannelFuture removeListeners(GenericFutureListener<? extends Future<? super Void>>... listeners);
 
+    /**
+     * TODO: 同步
+     * @return
+     * @throws InterruptedException
+     */
     @Override
     ChannelFuture sync() throws InterruptedException;
 

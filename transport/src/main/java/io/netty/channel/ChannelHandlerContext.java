@@ -25,6 +25,8 @@ import io.netty.util.concurrent.EventExecutor;
 import java.nio.channels.Channels;
 
 /**
+ * TODO: Netty中非常重要的组件，连接了channelHandler与channelPipeline
+ *
  * Enables a {@link ChannelHandler} to interact with its {@link ChannelPipeline}
  * and other handlers. Among other things a handler can notify the next {@link ChannelHandler} in the
  * {@link ChannelPipeline} as well as modify the {@link ChannelPipeline} it belongs to dynamically.
@@ -125,16 +127,21 @@ import java.nio.channels.Channels;
 public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvoker, ChannelOutboundInvoker {
 
     /**
+     * TODO: 返回它所关联的channel
+     *
      * Return the {@link Channel} which is bound to the {@link ChannelHandlerContext}.
      */
     Channel channel();
 
     /**
+     * TODO: 返回它所关联的线程事件组
+     *
      * Returns the {@link EventExecutor} which is used to execute an arbitrary task.
      */
     EventExecutor executor();
 
     /**
+     * TODO: channelHandlerContext的唯一名字，可用来访问channelHandler
      * The unique name of the {@link ChannelHandlerContext}.The name was used when then {@link ChannelHandler}
      * was added to the {@link ChannelPipeline}. This name can also be used to access the registered
      * {@link ChannelHandler} from the {@link ChannelPipeline}.
@@ -142,25 +149,49 @@ public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvok
     String name();
 
     /**
+     * TODO: 它所关联的channelHandler
+     *
      * The {@link ChannelHandler} that is bound this {@link ChannelHandlerContext}.
      */
     ChannelHandler handler();
 
     /**
+     * TODO: 如果channelHandler 从channel pipeline上移除了，那么返回true
+     *
      * Return {@code true} if the {@link ChannelHandler} which belongs to this context was removed
      * from the {@link ChannelPipeline}. Note that this method is only meant to be called from with in the
      * {@link EventLoop}.
      */
     boolean isRemoved();
 
+
+    /* ---------------- 下面几个方法均为传播事件方法 -------------- */
+
+
+    /**
+     * TODO: 传播channel registered事件
+     *
+     * @return
+     */
     @Override
     ChannelHandlerContext fireChannelRegistered();
 
+    /**
+     * TODO: 传播channel unRegistered事件
+     *
+     * @return
+     */
     @Override
     ChannelHandlerContext fireChannelUnregistered();
 
+    /**
+     * TODO:  传播channel active事件
+     *
+     * @return
+     */
     @Override
     ChannelHandlerContext fireChannelActive();
+
 
     @Override
     ChannelHandlerContext fireChannelInactive();
@@ -187,11 +218,15 @@ public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvok
     ChannelHandlerContext flush();
 
     /**
+     * TODO: 返回它所关联的channel pipeline
+     *
      * Return the assigned {@link ChannelPipeline}
      */
     ChannelPipeline pipeline();
 
     /**
+     * TODO: 返回它所关联的内存分配器
+     *
      * Return the assigned {@link ByteBufAllocator} which will be used to allocate {@link ByteBuf}s.
      */
     ByteBufAllocator alloc();

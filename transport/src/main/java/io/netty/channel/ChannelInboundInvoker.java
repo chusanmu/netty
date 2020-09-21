@@ -16,6 +16,8 @@
 package io.netty.channel;
 
 /**
+ * 一系列的入站方法
+ *
  * TODO: inBound事件的传播接口
  */
 public interface ChannelInboundInvoker {

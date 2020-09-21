@@ -16,11 +16,14 @@
 package io.netty.util.concurrent;
 
 /**
+ * TODO: 可写的future,可以给future设置执行结果
+ *
  * Special {@link Future} which is writable.
  */
 public interface Promise<V> extends Future<V> {
 
     /**
+     * TODO: 设置标记这个future 是成功的，并且唤醒所有的listeners
      * Marks this future as a success and notifies all
      * listeners.
      *
@@ -29,8 +32,10 @@ public interface Promise<V> extends Future<V> {
     Promise<V> setSuccess(V result);
 
     /**
+     * TODO: 尝试去设置future成功
      * Marks this future as a success and notifies all
      * listeners.
+     * 如果成功的标记了future是成功的，那么会返回true, 否则返回false 因为这个future已经被标记为成功的或者是失败的了。
      *
      * @return {@code true} if and only if successfully marked this future as
      *         a success. Otherwise {@code false} because this future is
@@ -39,6 +44,8 @@ public interface Promise<V> extends Future<V> {
     boolean trySuccess(V result);
 
     /**
+     * TODO: 标记这个future是一个失败的，并且唤醒所有的listener
+     *
      * Marks this future as a failure and notifies all
      * listeners.
      *
@@ -47,8 +54,11 @@ public interface Promise<V> extends Future<V> {
     Promise<V> setFailure(Throwable cause);
 
     /**
+     * TODO: 尝试标记这个future是失败的，并且唤醒所有的listener
      * Marks this future as a failure and notifies all
      * listeners.
+     *
+     * TODO: 如果标记成功了会返回true, 否则返回false,因为它这个future已经是成功的或者是失败的了
      *
      * @return {@code true} if and only if successfully marked this future as
      *         a failure. Otherwise {@code false} because this future is
@@ -57,6 +67,7 @@ public interface Promise<V> extends Future<V> {
     boolean tryFailure(Throwable cause);
 
     /**
+     * TODO: 标记这个future不可以去取消，如果设置成功会返回true,否则返回false, 因为已经被取消了
      * Make this future impossible to cancel.
      *
      * @return {@code true} if and only if successfully marked this future as uncancellable or it is already done
@@ -64,11 +75,25 @@ public interface Promise<V> extends Future<V> {
      */
     boolean setUncancellable();
 
+    /**
+     * TODO: 为当前future 添加一个listener
+     *
+     * @param listener
+     * @return
+     */
     @Override
     Promise<V> addListener(GenericFutureListener<? extends Future<? super V>> listener);
 
+    /**
+     * TODO: 添加多个listener
+     *
+     * @param listeners
+     * @return
+     */
     @Override
     Promise<V> addListeners(GenericFutureListener<? extends Future<? super V>>... listeners);
+
+    /* ---------------- 移除listener -------------- */
 
     @Override
     Promise<V> removeListener(GenericFutureListener<? extends Future<? super V>> listener);

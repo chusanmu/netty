@@ -27,22 +27,34 @@ import java.util.concurrent.TimeoutException;
  */
 public abstract class AbstractFuture<V> implements Future<V> {
 
+
+    /**
+     * TODO: 获取future 执行结果
+     * @return
+     * @throws InterruptedException
+     * @throws ExecutionException
+     */
     @Override
     public V get() throws InterruptedException, ExecutionException {
+        // TODO: 阻塞等待future 执行完成
         await();
-
+        // TODO: 把执行过程中的异常拿到
         Throwable cause = cause();
+        // TODO: 如果没有异常，就直接返回当前值
         if (cause == null) {
             return getNow();
         }
+        // TODO: 如果是取消异常就返回回去
         if (cause instanceof CancellationException) {
             throw (CancellationException) cause;
         }
+        // TODO: 否则包成一个excutionException返回回去
         throw new ExecutionException(cause);
     }
 
     @Override
     public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        // TODO: 这里有一个等待时间阻塞
         if (await(timeout, unit)) {
             Throwable cause = cause();
             if (cause == null) {

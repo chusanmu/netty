@@ -58,9 +58,16 @@ import static io.netty.channel.ChannelHandlerMask.MASK_USER_EVENT_TRIGGERED;
 import static io.netty.channel.ChannelHandlerMask.MASK_WRITE;
 import static io.netty.channel.ChannelHandlerMask.mask;
 
+/**
+ * TODO: 抽象的channel handler context
+ */
 abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, ResourceLeakHint {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractChannelHandlerContext.class);
+
+
+    /* ---------------- 从这里就可以看出来 它是一个双向链表 -------------- */
+
     volatile AbstractChannelHandlerContext next;
     volatile AbstractChannelHandlerContext prev;
 
@@ -101,21 +108,38 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     private volatile int handlerState = INIT;
 
+    /**
+     * 初始化，赋初始值
+     * @param pipeline
+     * @param executor
+     * @param name
+     * @param handlerClass
+     */
     AbstractChannelHandlerContext(DefaultChannelPipeline pipeline, EventExecutor executor,
                                   String name, Class<? extends ChannelHandler> handlerClass) {
         this.name = ObjectUtil.checkNotNull(name, "name");
         this.pipeline = pipeline;
         this.executor = executor;
+        // TODO: 这里很有意思，判断这个handlerClass是什么类型的
         this.executionMask = mask(handlerClass);
         // Its ordered if its driven by the EventLoop or the given Executor is an instanceof OrderedEventExecutor.
         ordered = executor == null || executor instanceof OrderedEventExecutor;
     }
 
+    /**
+     * TODO: 返回 pipeline 关联的channel
+     * @return
+     */
     @Override
     public Channel channel() {
         return pipeline.channel();
     }
 
+    /**
+     * TODO: 直接返回channelPipeline
+     *
+     * @return
+     */
     @Override
     public ChannelPipeline pipeline() {
         return pipeline;
@@ -128,6 +152,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     @Override
     public EventExecutor executor() {
+        // TODO: 如果executor为空，直接返回其channel关联的eventLoop
         if (executor == null) {
             return channel().eventLoop();
         } else {
@@ -142,15 +167,23 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     @Override
     public ChannelHandlerContext fireChannelRegistered() {
+        // TODO: findContextInbound 查找下一个的入站handler, 然后把 MASK_CHANNEL_REGISTERED 传进去
         invokeChannelRegistered(findContextInbound(MASK_CHANNEL_REGISTERED));
         return this;
     }
 
+    /**
+     * TODO: 去执行下一个节点触发channelRegistered事件
+     *
+     * @param next
+     */
     static void invokeChannelRegistered(final AbstractChannelHandlerContext next) {
         EventExecutor executor = next.executor();
+        // TODO: 判断是否在eventLoop线程中，如果是 就直接执行 ChannelRegistered
         if (executor.inEventLoop()) {
             next.invokeChannelRegistered();
         } else {
+            // TODO: 否则提交一个任务 去执行
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -163,8 +196,10 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private void invokeChannelRegistered() {
         if (invokeHandler()) {
             try {
+                // TODO: 去执行channelInboundHandler的channelRegistered方法
                 ((ChannelInboundHandler) handler()).channelRegistered(this);
             } catch (Throwable t) {
+                // TODO: 如果执行过程中出现了异常，就进行移除的传播
                 invokeExceptionCaught(t);
             }
         } else {
@@ -206,12 +241,14 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     @Override
     public ChannelHandlerContext fireChannelActive() {
+        // TODO: 传播执行 channelActive方法
         invokeChannelActive(findContextInbound(MASK_CHANNEL_ACTIVE));
         return this;
     }
 
     static void invokeChannelActive(final AbstractChannelHandlerContext next) {
         EventExecutor executor = next.executor();
+        // TODO: 判断是否是eventLoop线程，如果不是就向eventLoop提交一个任务
         if (executor.inEventLoop()) {
             next.invokeChannelActive();
         } else {
@@ -365,6 +402,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     static void invokeChannelRead(final AbstractChannelHandlerContext next, Object msg) {
         final Object m = next.pipeline.touch(ObjectUtil.checkNotNull(msg, "msg"), next);
         EventExecutor executor = next.executor();
+        // TODO: 触发channelRead事件
         if (executor.inEventLoop()) {
             next.invokeChannelRead(m);
         } else {
@@ -422,6 +460,10 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         }
     }
 
+    /**
+     * TODO: 传播写状态改变事件
+     * @return
+     */
     @Override
     public ChannelHandlerContext fireChannelWritabilityChanged() {
         invokeChannelWritabilityChanged(findContextInbound(MASK_CHANNEL_WRITABILITY_CHANGED));
@@ -506,6 +548,11 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return promise;
     }
 
+    /**
+     * 执行服务端端口绑定
+     * @param localAddress
+     * @param promise
+     */
     private void invokeBind(SocketAddress localAddress, ChannelPromise promise) {
         if (invokeHandler()) {
             try {
@@ -754,6 +801,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     private void invokeFlush0() {
         try {
+            // TODO: 进行flush
             ((ChannelOutboundHandler) handler()).flush(this);
         } catch (Throwable t) {
             invokeExceptionCaught(t);
@@ -782,6 +830,12 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         }
     }
 
+    /**
+     * 写出 这个msg不能为空
+     * @param msg
+     * @param flush
+     * @param promise
+     */
     private void write(Object msg, boolean flush, ChannelPromise promise) {
         ObjectUtil.checkNotNull(msg, "msg");
         try {
@@ -800,9 +854,11 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         final Object m = pipeline.touch(msg, next);
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
+            // TODO: 如果是flush的，那就执行 invokeWriteAndFlush
             if (flush) {
                 next.invokeWriteAndFlush(m, promise);
             } else {
+                // TODO: 否则执行invokeWrite
                 next.invokeWrite(m, promise);
             }
         } else {
@@ -887,10 +943,17 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return false;
     }
 
+    /**
+     * TODO: 查找下一个 inboundHandlerContext
+     *
+     * @param mask
+     * @return
+     */
     private AbstractChannelHandlerContext findContextInbound(int mask) {
         AbstractChannelHandlerContext ctx = this;
         EventExecutor currentExecutor = executor();
         do {
+            // TODO: 直接获取下一个节点，看看是不是需要跳过，不挑过就直接取next
             ctx = ctx.next;
         } while (skipContext(ctx, currentExecutor, mask, MASK_ONLY_INBOUND));
         return ctx;
@@ -907,6 +970,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         do {
             // TODO: 寻找前一个节点哦
             ctx = ctx.prev;
+            // TODO: 判断是否有@Skip注解需要跳过
         } while (skipContext(ctx, currentExecutor, mask, MASK_ONLY_OUTBOUND));
         return ctx;
     }
@@ -914,11 +978,14 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private static boolean skipContext(
             AbstractChannelHandlerContext ctx, EventExecutor currentExecutor, int mask, int onlyMask) {
         // Ensure we correctly handle MASK_EXCEPTION_CAUGHT which is not included in the MASK_EXCEPTION_CAUGHT
+        // TODO: executionMask 为当前handlerContext对应的handler类型计算出的 executionMask
+        // TODO: (onlyMask | mask) 的作用是把当前方法对应的标志位挑出来，然后与上 当前handlerContext的mask，如果该标志位为0，那么结果就是 == 0，最后就跳过
         return (ctx.executionMask & (onlyMask | mask)) == 0 ||
                 // We can only skip if the EventExecutor is the same as otherwise we need to ensure we offload
                 // everything to preserve ordering.
                 //
                 // See https://github.com/netty/netty/issues/10067
+                // TODO: 如果在当前eventLoop中执行的，那么 ctx.executionMask & mask == 0 表示 当前handlerContext的 executionMask 对应的标志位为0，也就是跳过
                 (ctx.executor() == currentExecutor && (ctx.executionMask & mask) == 0);
     }
 
@@ -931,15 +998,22 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         handlerState = REMOVE_COMPLETE;
     }
 
+    /**
+     * TODO: 采用自旋的方式 去保证设置 handler state 成功
+     * @return
+     */
     final boolean setAddComplete() {
+        // TODO: 自旋
         for (;;) {
             int oldState = handlerState;
+            // TODO: 如果oldState为Remove_complete, 那就直接返回false吧
             if (oldState == REMOVE_COMPLETE) {
                 return false;
             }
             // Ensure we never update when the handlerState is REMOVE_COMPLETE already.
             // oldState is usually ADD_PENDING but can also be REMOVE_COMPLETE when an EventExecutor is used that is not
             // exposing ordering guarantees.
+            // TODO: 以cas的方式 去设置 handler状态，改为add_complete状态，成功的话返回true
             if (HANDLER_STATE_UPDATER.compareAndSet(this, oldState, ADD_COMPLETE)) {
                 return true;
             }
@@ -954,6 +1028,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     final void callHandlerAdded() throws Exception {
         // We must call setAddComplete before calling handlerAdded. Otherwise if the handlerAdded method generates
         // any pipeline events ctx.handler() will miss them because the state will not allow it.
+        // TODO: 这里需要注意，是先改的handler节点状态，改为了 add_complete，改成功了 才去调用handlerAdd方法, 去进行回调
         if (setAddComplete()) {
             handler().handlerAdded(this);
         }
@@ -982,6 +1057,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
      */
     private boolean invokeHandler() {
         // Store in local variable to reduce volatile reads.
+        // TODO: 保存一个局部变量 去减少 volatile 读
         int handlerState = this.handlerState;
         return handlerState == ADD_COMPLETE || (!ordered && handlerState == ADD_PENDING);
     }

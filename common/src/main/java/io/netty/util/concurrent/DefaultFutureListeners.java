@@ -19,7 +19,13 @@ import java.util.Arrays;
 
 final class DefaultFutureListeners {
 
+    /**
+     * TODO: 保存了所有的listeners，这里用的数组保存的
+     */
     private GenericFutureListener<? extends Future<?>>[] listeners;
+    /**
+     * TODO: 保存了当前listener的个数
+     */
     private int size;
     private int progressiveSize; // the number of progressive listeners
 
@@ -38,13 +44,21 @@ final class DefaultFutureListeners {
         }
     }
 
+    /**
+     * 添加Listener
+     * @param l
+     */
     public void add(GenericFutureListener<? extends Future<?>> l) {
         GenericFutureListener<? extends Future<?>>[] listeners = this.listeners;
         final int size = this.size;
+        // TODO: 如果满了，进行2倍扩容
         if (size == listeners.length) {
+            // TODO: 把扩容后的数组，并且连同 元素 复制到新的数组中
             this.listeners = listeners = Arrays.copyOf(listeners, size << 1);
         }
+        // TODO: 把新加的listener放到Listeners中
         listeners[size] = l;
+        // TODO: 最后把size + 1
         this.size = size + 1;
 
         if (l instanceof GenericProgressiveFutureListener) {
@@ -52,10 +66,15 @@ final class DefaultFutureListeners {
         }
     }
 
+    /**
+     * 进行移除某个Listener
+     * @param l
+     */
     public void remove(GenericFutureListener<? extends Future<?>> l) {
         final GenericFutureListener<? extends Future<?>>[] listeners = this.listeners;
         int size = this.size;
         for (int i = 0; i < size; i ++) {
+            // TODO: 判断当前listener如果是目标listener，则进行移动
             if (listeners[i] == l) {
                 int listenersToMove = size - i - 1;
                 if (listenersToMove > 0) {

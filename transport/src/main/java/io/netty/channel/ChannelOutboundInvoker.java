@@ -22,6 +22,8 @@ import java.net.ConnectException;
 import java.net.SocketAddress;
 
 /**
+ * 一系列的出站方法
+ *
  * TODO: 传播写事件
  */
 public interface ChannelOutboundInvoker {

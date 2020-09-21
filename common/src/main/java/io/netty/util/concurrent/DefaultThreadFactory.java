@@ -24,6 +24,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * TODO: 默认的线程工厂
  * A {@link ThreadFactory} implementation with a simple naming rule.
  */
 public class DefaultThreadFactory implements ThreadFactory {
@@ -112,16 +113,18 @@ public class DefaultThreadFactory implements ThreadFactory {
         // TODO: 生成线程，注意名字, nioEventLoop-1-xx
         Thread t = newThread(FastThreadLocalRunnable.wrap(r), prefix + nextId.incrementAndGet());
         try {
+            // TODO: 设置是否为daemon线程
             if (t.isDaemon() != daemon) {
                 t.setDaemon(daemon);
             }
-
+            // TODO: 设置线程的优先级
             if (t.getPriority() != priority) {
                 t.setPriority(priority);
             }
         } catch (Exception ignored) {
             // Doesn't matter even if failed to set.
         }
+        // TODO: 最后把线程返回
         return t;
     }
 

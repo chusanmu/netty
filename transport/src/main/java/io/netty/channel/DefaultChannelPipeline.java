@@ -40,6 +40,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 /**
+ * TODO: 默认的channelPipeline, 很重要的一个类
+ *
  * The default {@link ChannelPipeline} implementation.  It is usually created
  * by a {@link Channel} implementation when the {@link Channel} is created.
  */
@@ -102,6 +104,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         tail = new TailContext(this);
         head = new HeadContext(this);
 
+        // TODO: 然后把它俩连接起来
         head.next = tail;
         tail.prev = head;
     }
@@ -216,7 +219,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         synchronized (this) {
             // TODO: 检查channelHandler 判断是否是可共享的， 检查是否重复添加
             checkMultiplicity(handler);
-            // TODO: 创建一个节点，并且添加到链表 fiterName检查重复名称
+            // TODO: 创建一个节点，并且添加到链表 filterName检查重复名称
             newCtx = newContext(group, filterName(name, handler), handler);
             // TODO: 指针赋值
             addLast0(newCtx);
@@ -224,22 +227,33 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             // If the registered is false it means that the channel was not registered on an eventLoop yet.
             // In this case we add the context to the pipeline and add a task that will call
             // ChannelHandler.handlerAdded(...) once the channel is registered.
+            // TODO: 在这种情况，表示channel还没有注册到一个eventLoop上面，在这种情况，我们添加了一个context到pipeline，加了一个task，
+            // TODO: 在task里面会去调用handlerAdded方法
             if (!registered) {
+                // TODO: 更改channelHandlerContext节点状态为 ADD_PENDING
                 newCtx.setAddPending();
+                // TODO: 然后把添加handlerContext操作封成一个task
                 callHandlerCallbackLater(newCtx, true);
                 return this;
             }
 
+            // TODO: 判断当前executor如果不是eventLoop线程
             EventExecutor executor = newCtx.executor();
             if (!executor.inEventLoop()) {
+                // TODO: 则提交到 executor中去运行
                 callHandlerAddedInEventLoop(newCtx, executor);
                 return this;
             }
         }
+        // TODO: 否则 直接执行
         callHandlerAdded0(newCtx);
         return this;
     }
 
+    /**
+     * TODO: 这里就是链表的一个连接
+     * @param newCtx
+     */
     private void addLast0(AbstractChannelHandlerContext newCtx) {
         AbstractChannelHandlerContext prev = tail.prev;
         newCtx.prev = prev;
@@ -665,10 +679,13 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     final void invokeHandlerAddedIfNeeded() {
         assert channel.eventLoop().inEventLoop();
+        // TODO: 判断是否是第一次注册
         if (firstRegistration) {
+            // TODO: 把标志改为false
             firstRegistration = false;
             // We are now registered to the EventLoop. It's time to call the callbacks for the ChannelHandlers,
             // that were added before the registration was done.
+            // TODO: 去执行所有handlers的 handlerAdd方法
             callHandlerAddedForAllHandlers();
         }
     }
@@ -1127,6 +1144,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             assert !registered;
 
             // This Channel itself was registered.
+            // TODO: 标记handler已经registered
             registered = true;
 
             pendingHandlerCallbackHead = this.pendingHandlerCallbackHead;
@@ -1137,25 +1155,38 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         // This must happen outside of the synchronized(...) block as otherwise handlerAdded(...) may be called while
         // holding the lock and so produce a deadlock if handlerAdded(...) will try to add another handler from outside
         // the EventLoop.
+        // TODO: 遍历去执行所有的task，其实就是去触发handlerAdd事件，或者handlerRemove事件
         PendingHandlerCallback task = pendingHandlerCallbackHead;
         while (task != null) {
+            // TODO: 执行execute()方法
             task.execute();
             task = task.next;
         }
     }
 
+
+    /**
+     * TODO: 这里把添加和移除ChannelHandlerContext 封成了一个task去执行的
+     * @param ctx
+     * @param added
+     */
     private void callHandlerCallbackLater(AbstractChannelHandlerContext ctx, boolean added) {
         assert !registered;
 
+        // TODO: 将添加或者需要移除的channelHandlerContext封成一个task
         PendingHandlerCallback task = added ? new PendingHandlerAddedTask(ctx) : new PendingHandlerRemovedTask(ctx);
         PendingHandlerCallback pending = pendingHandlerCallbackHead;
+        // TODO: 如果pending为空
         if (pending == null) {
+            // TODO: 把task赋给它
             pendingHandlerCallbackHead = task;
         } else {
+            // TODO: 否则就连起来，找到pending的尾结点
             // Find the tail of the linked-list.
             while (pending.next != null) {
                 pending = pending.next;
             }
+            // TODO: 将task设置成尾节点
             pending.next = task;
         }
     }
@@ -1271,7 +1302,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     /**
-     * TODO: 属于inbound处理器, 做一个收尾的操作，比如异常处理
+     * TODO: 做一个收尾的操作，比如异常处理, pipeline的尾结点
      */
     // A special catch-all handler that handles both bytes and messages.
     final class TailContext extends AbstractChannelHandlerContext implements ChannelInboundHandler {
@@ -1495,6 +1526,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         abstract void execute();
     }
 
+    /**
+     * TODO: 用来封装 需要添加的 channelHandlerContext
+     */
     private final class PendingHandlerAddedTask extends PendingHandlerCallback {
 
         PendingHandlerAddedTask(AbstractChannelHandlerContext ctx) {
@@ -1503,16 +1537,20 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void run() {
+            // TODO: 去执行handler的添加
             callHandlerAdded0(ctx);
         }
 
         @Override
         void execute() {
+            // TODO: 去执行handlerAdded方法
             EventExecutor executor = ctx.executor();
+            // TODO: 判断是否是一个 eventLoop线程正在执行，如果是，那就直接调用handlerAdded
             if (executor.inEventLoop()) {
                 callHandlerAdded0(ctx);
             } else {
                 try {
+                    // TODO: 否则提交一个任务，然后任务执行的时候，会执行run方法，去执行ChannelHandlerContext的添加
                     executor.execute(this);
                 } catch (RejectedExecutionException e) {
                     if (logger.isWarnEnabled()) {
@@ -1527,6 +1565,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
     }
 
+    /**
+     * TODO: 封装了需要移除的channelHandlerContext
+     */
     private final class PendingHandlerRemovedTask extends PendingHandlerCallback {
 
         PendingHandlerRemovedTask(AbstractChannelHandlerContext ctx) {
@@ -1542,6 +1583,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         void execute() {
             EventExecutor executor = ctx.executor();
             if (executor.inEventLoop()) {
+                // TODO: 在eventLoop线程，那就直接进行handler的remove
                 callHandlerRemoved0(ctx);
             } else {
                 try {

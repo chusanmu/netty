@@ -198,6 +198,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     /**
+     * TODO: 主要是校验group和channelFactory不能为空
      * Validate all the parameters. Sub-classes may override this, but should
      * call the super method in that case.
      */
@@ -265,7 +266,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * Create a new {@link Channel} and bind it.
      */
     public ChannelFuture bind(SocketAddress localAddress) {
+        // TODO: 会去校验 channelFactory, group 不能为空
         validate();
+        // TODO: 真正的去绑定端口
         return doBind(ObjectUtil.checkNotNull(localAddress, "localAddress"));
     }
 
@@ -276,10 +279,11 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         if (regFuture.cause() != null) {
             return regFuture;
         }
-
+        // TODO: 服务端channel注册成功之后，开始取绑定端口
         if (regFuture.isDone()) {
             // At this point we know that the registration was complete and successful.
             ChannelPromise promise = channel.newPromise();
+            // TODO: 去绑定端口
             doBind0(regFuture, channel, localAddress, promise);
             return promise;
         } else {
@@ -323,6 +327,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
 
+        // TODO: 注册channel
         ChannelFuture regFuture = config().group().register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {
@@ -356,7 +361,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         channel.eventLoop().execute(new Runnable() {
             @Override
             public void run() {
+                // TODO: 如果服务端 channel注册成功，去绑定端口号
                 if (regFuture.isSuccess()) {
+                    // TODO:
                     channel.bind(localAddress, promise).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
                 } else {
                     promise.setFailure(regFuture.cause());

@@ -109,7 +109,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
                 }
             }
         }
-        // TODO: 创建选择器, 给新连接绑定eventLoop
+        // TODO: 创建选择器, 给新连接绑定eventLoop，使用chooser来分配eventLoop
         chooser = chooserFactory.newChooser(children);
 
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {

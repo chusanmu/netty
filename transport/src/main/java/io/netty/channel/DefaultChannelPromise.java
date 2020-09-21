@@ -53,6 +53,10 @@ public class DefaultChannelPromise extends DefaultPromise<Void> implements Chann
         this.channel = checkNotNull(channel, "channel");
     }
 
+    /**
+     * TODO: 获得当前的eventExecutor，如果为空，那就返回channel关联的eventLoop
+     * @return
+     */
     @Override
     protected EventExecutor executor() {
         EventExecutor e = super.executor();

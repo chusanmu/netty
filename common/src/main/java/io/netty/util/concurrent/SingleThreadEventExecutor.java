@@ -955,6 +955,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     private void startThread() {
         // TODO: 判断当前线程是否是未启动的
         if (state == ST_NOT_STARTED) {
+            // TODO: 把当前线程状态设置成已启动
             if (STATE_UPDATER.compareAndSet(this, ST_NOT_STARTED, ST_STARTED)) {
                 boolean success = false;
                 try {
@@ -962,6 +963,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                     success = true;
                 } finally {
                     if (!success) {
+                        // TODO: 如果启动失败了，设置ST_NOT_STARTED
                         STATE_UPDATER.compareAndSet(this, ST_STARTED, ST_NOT_STARTED);
                     }
                 }
@@ -994,6 +996,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
             public void run() {
                 // TODO: 把当前线程进行保存
                 thread = Thread.currentThread();
+                // TODO: 如果已经中断，标记线程中断
                 if (interrupted) {
                     thread.interrupt();
                 }

@@ -106,6 +106,8 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
     }
 
     /**
+     * TODO: 创建了一个DefaultChannelPipeline，然后把当前的channel传了进去
+     *
      * Returns a new {@link DefaultChannelPipeline} instance.
      */
     protected DefaultChannelPipeline newChannelPipeline() {
@@ -457,6 +459,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         @Override
         public final void register(EventLoop eventLoop, final ChannelPromise promise) {
             ObjectUtil.checkNotNull(eventLoop, "eventLoop");
+            // TODO: 如果已经注册完了，那就设置失败结果
             if (isRegistered()) {
                 promise.setFailure(new IllegalStateException("registered to an event loop already"));
                 return;
@@ -467,12 +470,15 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
             // TODO: 绑定线程，告诉channel，后续所有的IO事件都交给 我这个eventLoop去实现就OK了
+            // TODO: 把当前channel注册到 eventLoop上面
             AbstractChannel.this.eventLoop = eventLoop;
 
+            // TODO: 如果eventLoop就是当前线程，那么直接执行
             if (eventLoop.inEventLoop()) {
                 register0(promise);
             } else {
                 try {
+                    // TODO: 否则提交了一个任务，去注册
                     eventLoop.execute(new Runnable() {
                         @Override
                         public void run() {
@@ -509,7 +515,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
-                // TODO: 触发handler Added事件
+                // TODO: 触发handler Added事件，尝试去执行 handlerAdded 的 Task
                 pipeline.invokeHandlerAddedIfNeeded();
 
                 safeSetSuccess(promise);
@@ -517,7 +523,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 pipeline.fireChannelRegistered();
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.
-                // TODO: 注册selector时，这里返回的是false
+                // TODO: 判断通道是否激活，如果激活了，则传播 fireChannelActive 事件
                 if (isActive()) {
                     if (firstRegistration) {
                         pipeline.fireChannelActive();

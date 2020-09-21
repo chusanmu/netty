@@ -32,6 +32,9 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+/**
+ * TODO: 此类中应用了位运算，来判断handler类型
+ */
 final class ChannelHandlerMask {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ChannelHandlerMask.class);
 
@@ -54,13 +57,23 @@ final class ChannelHandlerMask {
     static final int MASK_WRITE = 1 << 15;
     static final int MASK_FLUSH = 1 << 16;
 
+    /**
+     * 表示是一个inbound handler
+     */
     static final int MASK_ONLY_INBOUND =  MASK_CHANNEL_REGISTERED |
             MASK_CHANNEL_UNREGISTERED | MASK_CHANNEL_ACTIVE | MASK_CHANNEL_INACTIVE | MASK_CHANNEL_READ |
             MASK_CHANNEL_READ_COMPLETE | MASK_USER_EVENT_TRIGGERED | MASK_CHANNEL_WRITABILITY_CHANGED;
+
     private static final int MASK_ALL_INBOUND = MASK_EXCEPTION_CAUGHT | MASK_ONLY_INBOUND;
+
+    /**
+     * 表示是一个outbound handler
+     */
     static final int MASK_ONLY_OUTBOUND =  MASK_BIND | MASK_CONNECT | MASK_DISCONNECT |
             MASK_CLOSE | MASK_DEREGISTER | MASK_READ | MASK_WRITE | MASK_FLUSH;
+
     private static final int MASK_ALL_OUTBOUND = MASK_EXCEPTION_CAUGHT | MASK_ONLY_OUTBOUND;
+
 
     private static final FastThreadLocal<Map<Class<? extends ChannelHandler>, Integer>> MASKS =
             new FastThreadLocal<Map<Class<? extends ChannelHandler>, Integer>>() {
@@ -76,12 +89,16 @@ final class ChannelHandlerMask {
     static int mask(Class<? extends ChannelHandler> clazz) {
         // Try to obtain the mask from the cache first. If this fails calculate it and put it in the cache for fast
         // lookup in the future.
+        // TODO: 会先去cache里面找一下
         Map<Class<? extends ChannelHandler>, Integer> cache = MASKS.get();
         Integer mask = cache.get(clazz);
+        // TODO: 如果cache里面没有，回去计算一下 然后放进去
         if (mask == null) {
+            // TODO: 计算mask
             mask = mask0(clazz);
             cache.put(clazz, mask);
         }
+        // TODO: 最后把mask返回回去
         return mask;
     }
 
@@ -91,10 +108,14 @@ final class ChannelHandlerMask {
     private static int mask0(Class<? extends ChannelHandler> handlerType) {
         int mask = MASK_EXCEPTION_CAUGHT;
         try {
+            // TODO: 如果这个类是一个inbound handler类
             if (ChannelInboundHandler.class.isAssignableFrom(handlerType)) {
+                // TODO: 进行mask的赋值
                 mask |= MASK_ALL_INBOUND;
 
+                // TODO: 如果有这个方法，并且被 skip()标注, 那么就跳过这个方法了
                 if (isSkippable(handlerType, "channelRegistered", ChannelHandlerContext.class)) {
+                    // TODO: 计算 mask，如果跳过此方法的话，就把该方法对应的标志位变为0
                     mask &= ~MASK_CHANNEL_REGISTERED;
                 }
                 if (isSkippable(handlerType, "channelUnregistered", ChannelHandlerContext.class)) {
@@ -119,10 +140,10 @@ final class ChannelHandlerMask {
                     mask &= ~MASK_USER_EVENT_TRIGGERED;
                 }
             }
-
+            // TODO: 同样的 判断该handler类型是否是 ChannelOutboundHandler
             if (ChannelOutboundHandler.class.isAssignableFrom(handlerType)) {
                 mask |= MASK_ALL_OUTBOUND;
-
+                // TODO: 判断如果跳过此方法，则把此方法对应的标志位置位0
                 if (isSkippable(handlerType, "bind", ChannelHandlerContext.class,
                         SocketAddress.class, ChannelPromise.class)) {
                     mask &= ~MASK_BIND;
@@ -163,6 +184,15 @@ final class ChannelHandlerMask {
         return mask;
     }
 
+    /**
+     * TODO: 判断方法是否可以跳过
+     *
+     * @param handlerType
+     * @param methodName
+     * @param paramTypes
+     * @return
+     * @throws Exception
+     */
     @SuppressWarnings("rawtypes")
     private static boolean isSkippable(
             final Class<?> handlerType, final String methodName, final Class<?>... paramTypes) throws Exception {
@@ -171,6 +201,7 @@ final class ChannelHandlerMask {
             public Boolean run() throws Exception {
                 Method m;
                 try {
+                    // TODO: 拿到此方法
                     m = handlerType.getMethod(methodName, paramTypes);
                 } catch (NoSuchMethodException e) {
                     if (logger.isDebugEnabled()) {
@@ -179,6 +210,7 @@ final class ChannelHandlerMask {
                     }
                     return false;
                 }
+                // TODO: 判断此方法不为空，并且此方法上标注了 Skip 注解
                 return m != null && m.isAnnotationPresent(Skip.class);
             }
         });
