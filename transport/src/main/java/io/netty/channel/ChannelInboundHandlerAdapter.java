@@ -18,6 +18,7 @@ package io.netty.channel;
 import io.netty.channel.ChannelHandlerMask.Skip;
 
 /**
+ * TODO: 入站 处理器适配器，都是使用 ChannelHandlerContext 直接向下传播事件
  * Abstract base class for {@link ChannelInboundHandler} implementations which provide
  * implementations of all of their methods.
  *

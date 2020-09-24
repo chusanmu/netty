@@ -28,6 +28,7 @@ public final class RejectedExecutionHandlers {
     private static final RejectedExecutionHandler REJECT = new RejectedExecutionHandler() {
         @Override
         public void rejected(Runnable task, SingleThreadEventExecutor executor) {
+            // TODO: 这里的拒绝策略是直接抛出异常
             throw new RejectedExecutionException();
         }
     };

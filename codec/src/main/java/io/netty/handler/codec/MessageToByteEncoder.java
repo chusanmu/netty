@@ -27,6 +27,7 @@ import io.netty.util.internal.TypeParameterMatcher;
 
 
 /**
+ * TODO: 编码器，它继承了outboundHandlerAdapter，表示它是一个出站处理器
  * {@link ChannelOutboundHandlerAdapter} which encodes message in a stream-like fashion from one message to an
  * {@link ByteBuf}.
  *

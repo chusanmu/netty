@@ -31,6 +31,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * TODO: 空闲监测 handler
+ *
  * Triggers an {@link IdleStateEvent} when a {@link Channel} has not performed
  * read, write, or both operation for a while.
  *
@@ -97,6 +99,9 @@ import java.util.concurrent.TimeUnit;
  * @see WriteTimeoutHandler
  */
 public class IdleStateHandler extends ChannelDuplexHandler {
+    /**
+     * TODO: 这里间隔最小就是1
+     */
     private static final long MIN_TIMEOUT_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
 
     // Not create a new ChannelFutureListener per write operation to reduce GC pressure.
@@ -195,11 +200,15 @@ public class IdleStateHandler extends ChannelDuplexHandler {
 
         this.observeOutput = observeOutput;
 
+        /* ---------------- 这里进行一个读写空闲时间的格式化 -------------- */
+        // TODO: 如果你传进来的读空闲时间小于0，那就直接让它等于0
         if (readerIdleTime <= 0) {
             readerIdleTimeNanos = 0;
         } else {
+            // TODO: 否则，它有一个最小的空闲时间，你传进来的空闲时间 不能小于它
             readerIdleTimeNanos = Math.max(unit.toNanos(readerIdleTime), MIN_TIMEOUT_NANOS);
         }
+        // TODO: 校正写空闲时间
         if (writerIdleTime <= 0) {
             writerIdleTimeNanos = 0;
         } else {
@@ -238,9 +247,11 @@ public class IdleStateHandler extends ChannelDuplexHandler {
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+        // TODO: 如果当前channel已经激活，并且当前channel已经绑定了eventLoop
         if (ctx.channel().isActive() && ctx.channel().isRegistered()) {
             // channelActive() event has been fired already, which means this.channelActive() will
             // not be invoked. We have to initialize here instead.
+            // TODO: 就去初始化去
             initialize(ctx);
         } else {
             // channelActive() event has not been fired yet.  this.channelActive() will be invoked
@@ -250,12 +261,14 @@ public class IdleStateHandler extends ChannelDuplexHandler {
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+        // TODO: handlerRemoved触发了 destroy()
         destroy();
     }
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         // Initialize early if channel is active already.
+        // TODO: 如果channel激活了，那就去初始化
         if (ctx.channel().isActive()) {
             initialize(ctx);
         }
@@ -279,19 +292,26 @@ public class IdleStateHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        // TODO: 如果读空闲时间，或者 读写空闲时间 大于0
         if (readerIdleTimeNanos > 0 || allIdleTimeNanos > 0) {
+            // TODO: 当channelRead事件发生时，标记reading为true, 表示正在读
             reading = true;
             firstReaderIdleEvent = firstAllIdleEvent = true;
         }
+        // TODO: 向下传播读事件
         ctx.fireChannelRead(msg);
     }
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        // TODO: 如果读空闲时间，或者 读写空闲时间 大于0 并且 是正在读的状态
         if ((readerIdleTimeNanos > 0 || allIdleTimeNanos > 0) && reading) {
+            // TODO: lastReadTime标记为当前时间
             lastReadTime = ticksInNanos();
+            // TODO: 把reading状态置位false
             reading = false;
         }
+        // TODO: 接着向下传播事件
         ctx.fireChannelReadComplete();
     }
 
@@ -314,11 +334,16 @@ public class IdleStateHandler extends ChannelDuplexHandler {
             return;
         }
 
+        // TODO: 1 表示正在初始化
         state = 1;
+
         initOutputChanged(ctx);
 
         lastReadTime = lastWriteTime = ticksInNanos();
+
+        // TODO: 初始化，这里搞了3个不同的定时调度任务
         if (readerIdleTimeNanos > 0) {
+            // TODO: 如果读空闲时间大于0
             readerIdleTimeout = schedule(ctx, new ReaderIdleTimeoutTask(ctx),
                     readerIdleTimeNanos, TimeUnit.NANOSECONDS);
         }
@@ -347,7 +372,10 @@ public class IdleStateHandler extends ChannelDuplexHandler {
     }
 
     private void destroy() {
+        // TODO: 更改状态 state = 2
         state = 2;
+
+        /* ---------------- 如果超时时间，读写超时时间 等都不为空，那就取消掉 schedule任务，然后将其置空 -------------- */
 
         if (readerIdleTimeout != null) {
             readerIdleTimeout.cancel(false);
@@ -368,6 +396,7 @@ public class IdleStateHandler extends ChannelDuplexHandler {
      * {@link ChannelHandlerContext#fireUserEventTriggered(Object)}.
      */
     protected void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) throws Exception {
+        // TODO: 触发一个事件
         ctx.fireUserEventTriggered(evt);
     }
 
@@ -375,6 +404,9 @@ public class IdleStateHandler extends ChannelDuplexHandler {
      * Returns a {@link IdleStateEvent}.
      */
     protected IdleStateEvent newIdleStateEvent(IdleState state, boolean first) {
+
+        /* ---------------- 如果是第一次空闲，会触发 IdleStateEvent.FIRST_XXX事件 -------------- */
+
         switch (state) {
             case ALL_IDLE:
                 return first ? IdleStateEvent.FIRST_ALL_IDLE_STATE_EVENT : IdleStateEvent.ALL_IDLE_STATE_EVENT;
@@ -479,6 +511,9 @@ public class IdleStateHandler extends ChannelDuplexHandler {
         protected abstract void run(ChannelHandlerContext ctx);
     }
 
+    /**
+     * 监测读空闲
+     */
     private final class ReaderIdleTimeoutTask extends AbstractIdleTask {
 
         ReaderIdleTimeoutTask(ChannelHandlerContext ctx) {
@@ -487,46 +522,63 @@ public class IdleStateHandler extends ChannelDuplexHandler {
 
         @Override
         protected void run(ChannelHandlerContext ctx) {
+            // TODO: 把空闲时间 拿过来
             long nextDelay = readerIdleTimeNanos;
+            // TODO: 如果已经读完了，计算下一个间隔时间
             if (!reading) {
+                // TODO: 空闲时间 减去 (当前时间 减去 上次读的时间)，很显然，小于0 就表示超时了
                 nextDelay -= ticksInNanos() - lastReadTime;
             }
 
+            // TODO: 如果小于等于0，表示超时了，会触发读空闲事件
             if (nextDelay <= 0) {
                 // Reader is idle - set a new timeout and notify the callback.
+                // TODO: 然后接着进行调度，指定调度开始时间为 readerIdleTimeNanos 之后进行调度
                 readerIdleTimeout = schedule(ctx, this, readerIdleTimeNanos, TimeUnit.NANOSECONDS);
 
+                // TODO: 把第一次读空闲事件置位false
                 boolean first = firstReaderIdleEvent;
                 firstReaderIdleEvent = false;
 
                 try {
+                    // TODO: 创建了一个event
                     IdleStateEvent event = newIdleStateEvent(IdleState.READER_IDLE, first);
+                    // TODO: 这里肯定就是向下传播读空闲事件了
                     channelIdle(ctx, event);
                 } catch (Throwable t) {
+                    // TODO: 如果有异常，去触发异常处理事件
                     ctx.fireExceptionCaught(t);
                 }
             } else {
                 // Read occurred before the timeout - set a new timeout with shorter delay.
+                // TODO: nextDelay 后接着进行调度，也就是说，等到了 【读超时时间readerIdleTimeNanos】 之后 会接着进行调度
                 readerIdleTimeout = schedule(ctx, this, nextDelay, TimeUnit.NANOSECONDS);
             }
         }
     }
 
+    /**
+     * TODO: 用以监测写超时时间
+     */
     private final class WriterIdleTimeoutTask extends AbstractIdleTask {
 
         WriterIdleTimeoutTask(ChannelHandlerContext ctx) {
             super(ctx);
         }
 
+
         @Override
         protected void run(ChannelHandlerContext ctx) {
-
+            // TODO: 把上次写的时间拿到
             long lastWriteTime = IdleStateHandler.this.lastWriteTime;
+            // TODO: 计算 nextDelay 时间
             long nextDelay = writerIdleTimeNanos - (ticksInNanos() - lastWriteTime);
+            // TODO: 如果小于等于0，表示空闲超时了啊
             if (nextDelay <= 0) {
                 // Writer is idle - set a new timeout and notify the callback.
+                // TODO: 紧接着就触发了一个延迟任务，接着下一波进行监测
                 writerIdleTimeout = schedule(ctx, this, writerIdleTimeNanos, TimeUnit.NANOSECONDS);
-
+                // TODO: 拿到是否是第一次写超时
                 boolean first = firstWriterIdleEvent;
                 firstWriterIdleEvent = false;
 
@@ -535,18 +587,25 @@ public class IdleStateHandler extends ChannelDuplexHandler {
                         return;
                     }
 
+                    // TODO: 触发一个 写空闲事件
                     IdleStateEvent event = newIdleStateEvent(IdleState.WRITER_IDLE, first);
+                    // TODO: 向下传播事件
                     channelIdle(ctx, event);
                 } catch (Throwable t) {
+                    // TODO: 如果有异常，传播异常事件
                     ctx.fireExceptionCaught(t);
                 }
             } else {
                 // Write occurred before the timeout - set a new timeout with shorter delay.
+                // TODO: 如果没有超时，那就等到超时时间，紧接着进行调度
                 writerIdleTimeout = schedule(ctx, this, nextDelay, TimeUnit.NANOSECONDS);
             }
         }
     }
 
+    /**
+     * TODO: 用以监测读写空闲时间
+     */
     private final class AllIdleTimeoutTask extends AbstractIdleTask {
 
         AllIdleTimeoutTask(ChannelHandlerContext ctx) {
@@ -555,14 +614,18 @@ public class IdleStateHandler extends ChannelDuplexHandler {
 
         @Override
         protected void run(ChannelHandlerContext ctx) {
-
+            // TODO: 把nextDelay时间拿到
             long nextDelay = allIdleTimeNanos;
+            // TODO: 如果不是正在读，重新计算超时时间
             if (!reading) {
+                // TODO: 读完了，重新计算 nextDelay, 当前时间，减上 ( 读超时时间，和写超时时间，哪个大 拿哪个 )
                 nextDelay -= ticksInNanos() - Math.max(lastReadTime, lastWriteTime);
             }
+            // TODO: 如果超时了
             if (nextDelay <= 0) {
                 // Both reader and writer are idle - set a new timeout and
                 // notify the callback.
+                // TODO: 重新进行调度
                 allIdleTimeout = schedule(ctx, this, allIdleTimeNanos, TimeUnit.NANOSECONDS);
 
                 boolean first = firstAllIdleEvent;
@@ -572,15 +635,17 @@ public class IdleStateHandler extends ChannelDuplexHandler {
                     if (hasOutputChanged(ctx, first)) {
                         return;
                     }
-
+                    // TODO: 接着触发读写空闲事件
                     IdleStateEvent event = newIdleStateEvent(IdleState.ALL_IDLE, first);
                     channelIdle(ctx, event);
                 } catch (Throwable t) {
+                    // TODO: 如果有异常了，触发异常传播事件
                     ctx.fireExceptionCaught(t);
                 }
             } else {
                 // Either read or write occurred before the timeout - set a new
                 // timeout with shorter delay.
+                // TODO: 表示没有超时， 那就等到了超时时间，就再进行调度一次
                 allIdleTimeout = schedule(ctx, this, nextDelay, TimeUnit.NANOSECONDS);
             }
         }

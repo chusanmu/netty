@@ -140,12 +140,14 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         assert inEventLoop();
         // TODO: 从队列中 弹出来一个task
         ScheduledFutureTask<?> scheduledTask = peekScheduledTask();
+        // TODO: 如果task等于空，或者 没到执行时间，那就直接返回null
         if (scheduledTask == null || scheduledTask.deadlineNanos() - nanoTime > 0) {
             return null;
         }
-        // TODO: 移除一个元素
+        // TODO: 否则移除这个元素
         scheduledTaskQueue.remove();
         scheduledTask.setConsumed();
+        // TODO: 把优先级队列中的任务返回
         return scheduledTask;
     }
 
@@ -158,16 +160,24 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     }
 
     /**
+     * TODO: 返回定时队列中第一个任务的截止时间
      * Return the deadline (in nanoseconds) when the next scheduled task is ready to be run or {@code -1}
      * if no task is scheduled.
      */
     protected final long nextScheduledTaskDeadlineNanos() {
         ScheduledFutureTask<?> scheduledTask = peekScheduledTask();
+        // TODO: 如果返回-1了表示 优先级队列中没有任务需要执行
         return scheduledTask != null ? scheduledTask.deadlineNanos() : -1;
     }
 
+    /**
+     * TODO: 查看优先级队列中的任务
+     *
+     * @return
+     */
     final ScheduledFutureTask<?> peekScheduledTask() {
         Queue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue;
+        // TODO: 如果优先级队列不为空，那就peek一下，否则直接返回null
         return scheduledTaskQueue != null ? scheduledTaskQueue.peek() : null;
     }
 

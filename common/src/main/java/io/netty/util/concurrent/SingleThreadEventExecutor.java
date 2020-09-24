@@ -44,6 +44,8 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 /**
+ * TODO: 单线程事件执行器
+ *
  * Abstract base class for {@link OrderedEventExecutor}'s that execute all its submitted tasks in a single thread.
  *
  */
@@ -206,13 +208,24 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      * @see Queue#poll()
      */
     protected Runnable pollTask() {
+        // TODO: 必须是eventLoop线程运行的
         assert inEventLoop();
+        // TODO: 从taskQueue中弹出来一个任务
         return pollTaskFrom(taskQueue);
     }
 
+    /**
+     * TODO: 从taskQueue中弹出来一个任务
+     *
+     * @param taskQueue
+     * @return
+     */
     protected static Runnable pollTaskFrom(Queue<Runnable> taskQueue) {
+        // TODO: 这里是一个死循环
         for (;;) {
+            // TODO: poll出来一个task
             Runnable task = taskQueue.poll();
+            // TODO: 如果task不是 WAKEUP_TASK ，就直接把task返回回去
             if (task != WAKEUP_TASK) {
                 return task;
             }
@@ -275,6 +288,11 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         }
     }
 
+    /**
+     * TODO: 从优先级队列中取出来任务 放到 taskQueue中
+     *
+     * @return
+     */
     private boolean fetchFromScheduledTaskQueue() {
         if (scheduledTaskQueue == null || scheduledTaskQueue.isEmpty()) {
             return true;
@@ -283,12 +301,14 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         for (;;) {
             // TODO: 弹出一个任务，按照截止时间进行排序，如果相等 用id排序
             Runnable scheduledTask = pollScheduledTask(nanoTime);
+            // TODO: 如果等于空，直接返回true
             if (scheduledTask == null) {
                 return true;
             }
             // TODO: 把这个任务拿出来，直接放到普通任务队列中，如果失败了，再放回去
             if (!taskQueue.offer(scheduledTask)) {
                 // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
+                // TODO: taskQueue中没有空了，那就接着放回 scheduledTaskQueue 优先级队列中吧
                 scheduledTaskQueue.add((ScheduledFutureTask<?>) scheduledTask);
                 return false;
             }
@@ -340,11 +360,13 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     /**
+     * TODO: 往queue中添加一个task
      * Add a task to the task queue, or throws a {@link RejectedExecutionException} if this instance was shutdown
      * before.
      */
     protected void addTask(Runnable task) {
         ObjectUtil.checkNotNull(task, "task");
+        // TODO: 如果加不进去了，就直接reject掉
         if (!offerTask(task)) {
             reject(task);
         }
@@ -424,9 +446,12 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      */
     protected final boolean runAllTasksFrom(Queue<Runnable> taskQueue) {
         Runnable task = pollTaskFrom(taskQueue);
+        // TODO: 如果task还为null,那就直接返回
         if (task == null) {
             return false;
         }
+
+        // TODO: 一直从taskQueue中取任务，然后执行，一直等到返回null的时候，直接return掉
         for (;;) {
             safeExecute(task);
             task = pollTaskFrom(taskQueue);
@@ -464,6 +489,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     protected boolean runAllTasks(long timeoutNanos) {
         // TODO: 任务聚合 将定时任务 拿到 普通的taskQueue里面
         fetchFromScheduledTaskQueue();
+        // TODO: 从taskQueue中弹出来一个任务
         Runnable task = pollTask();
         if (task == null) {
             // TODO: 如果task为null直接返回吧
@@ -478,6 +504,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
             // TODO: 定时任务，执行异常不会终止的
             safeExecute(task);
 
+            // TODO: 任务个数+1
             runTasks ++;
 
             // Check timeout every 64 tasks because nanoTime() is relatively expensive.
@@ -485,19 +512,22 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
             // TODO: 当执行64次的时候，会进行一个判断
             if ((runTasks & 0x3F) == 0) {
                 lastExecutionTime = ScheduledFutureTask.nanoTime();
+                // TODO: 如果超时了，就break掉
                 if (lastExecutionTime >= deadline) {
                     break;
                 }
             }
             // TODO: 再拿出来task
             task = pollTask();
+            // TODO: 如果task为空了，就直接break掉
             if (task == null) {
                 lastExecutionTime = ScheduledFutureTask.nanoTime();
                 break;
             }
         }
-
+        // TODO: 执行这个预留方法
         afterRunningAllTasks();
+        // TODO: 更新最后执行时间
         this.lastExecutionTime = lastExecutionTime;
         return true;
     }
@@ -820,9 +850,16 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return isTerminated();
     }
 
+    /**
+     * TODO: 提交执行 task
+     *
+     * @param task
+     */
     @Override
     public void execute(Runnable task) {
+        // TODO: task不能为空
         ObjectUtil.checkNotNull(task, "task");
+        // TODO: 提交task任务
         execute(task, !(task instanceof LazyRunnable) && wakesUpForTask(task));
     }
 
@@ -832,12 +869,13 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     private void execute(Runnable task, boolean immediate) {
-        // TODO: 判断当前执行的线程是否是NioEventLoop的线程， main线程启动，这里返回false
+        // TODO: 判断当前执行的线程是否是NioEventLoop的线程， 如果是main线程启动，这里返回false
         boolean inEventLoop = inEventLoop();
         // TODO: 将当前任务添加到queue中
         addTask(task);
+        // TODO: 如果不是eventLoop线程
         if (!inEventLoop) {
-            // TODO: 启动一个线程
+            // TODO: 开始启动一个线程
             startThread();
             // TODO: 如果关闭了
             if (isShutdown()) {
@@ -959,6 +997,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
             if (STATE_UPDATER.compareAndSet(this, ST_NOT_STARTED, ST_STARTED)) {
                 boolean success = false;
                 try {
+                    // TODO: 开始启动线程
                     doStartThread();
                     success = true;
                 } finally {

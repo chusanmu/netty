@@ -77,16 +77,19 @@ import java.net.SocketAddress;
 public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparable<Channel> {
 
     /**
+     * TODO: 返回全局唯一的id
      * Returns the globally unique identifier of this {@link Channel}.
      */
     ChannelId id();
 
     /**
+     * TODO: 返回这个channel所注册的 eventLoop
      * Return the {@link EventLoop} this {@link Channel} was registered to.
      */
     EventLoop eventLoop();
 
     /**
+     * TODO: 返回这个channel的parent
      * Returns the parent of this channel.
      *
      * @return the parent channel.
@@ -95,21 +98,25 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
     Channel parent();
 
     /**
+     * TODO: 返回这个channel的config配置
      * Returns the configuration of this channel.
      */
     ChannelConfig config();
 
     /**
+     * TODO: 判断这个channel 是不是 open状态
      * Returns {@code true} if the {@link Channel} is open and may get active later
      */
     boolean isOpen();
 
     /**
+     * TODO: 判断这个channel是否注册到eventLoop上面了
      * Returns {@code true} if the {@link Channel} is registered with an {@link EventLoop}.
      */
     boolean isRegistered();
 
     /**
+     * TODO: 判断这个channel是否是激活状态
      * Return {@code true} if the {@link Channel} is active and so connected.
      */
     boolean isActive();
@@ -120,6 +127,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
     ChannelMetadata metadata();
 
     /**
+     * TODO: 返回channle绑定的本地地址
      * Returns the local address where this channel is bound to.  The returned
      * {@link SocketAddress} is supposed to be down-cast into more concrete
      * type such as {@link InetSocketAddress} to retrieve the detailed
@@ -153,6 +161,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
     ChannelFuture closeFuture();
 
     /**
+     * TODO: 判断当前通道是否可写，如果可写会返回true, 否则会返回false,直到IO操作线程可写
      * Returns {@code true} if and only if the I/O thread will perform the
      * requested write operation immediately.  Any write requests made when
      * this method returns {@code false} are queued until the I/O thread is
@@ -173,11 +182,13 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
     long bytesBeforeWritable();
 
     /**
+     * TODO: 返回底层操作的 Unsafe
      * Returns an <em>internal-use-only</em> object that provides unsafe operations.
      */
     Unsafe unsafe();
 
     /**
+     * TODO: 返回当前channel 所关联的 ChannelPipeline
      * Return the assigned {@link ChannelPipeline}.
      */
     ChannelPipeline pipeline();
@@ -194,6 +205,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
     Channel flush();
 
     /**
+     * TODO: 所有的底层操作，交给Unsafe去处理
      * <em>Unsafe</em> operations that should <em>never</em> be called from user-code. These methods
      * are only provided to implement the actual transport, and must be invoked from an I/O thread except for the
      * following methods:

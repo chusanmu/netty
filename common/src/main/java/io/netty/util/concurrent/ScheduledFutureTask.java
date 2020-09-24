@@ -108,7 +108,9 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
     void setConsumed() {
         // Optimization to avoid checking system clock again
         // after deadline has passed and task has been dequeued
+        // TODO: perioNanos == 0 表示不重复执行
         if (periodNanos == 0) {
+            // TODO: 断言已经到了它的执行时间，然后把它的时间搞成0
             assert nanoTime() >= deadlineNanos;
             deadlineNanos = 0L;
         }

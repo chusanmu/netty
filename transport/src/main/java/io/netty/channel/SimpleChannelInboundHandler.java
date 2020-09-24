@@ -19,6 +19,7 @@ import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.TypeParameterMatcher;
 
 /**
+ * TODO: 主要对channelRead进行了一个模板化的抽象
  * {@link ChannelInboundHandlerAdapter} which allows to explicit only handle a specific type of messages.
  *
  * For example here is an implementation which only handle {@link String} messages.
@@ -117,6 +118,7 @@ public abstract class SimpleChannelInboundHandler<I> extends ChannelInboundHandl
     }
 
     /**
+     * TODO: 交给子类去实现吧
      * Is called for each message of type {@link I}.
      *
      * @param ctx           the {@link ChannelHandlerContext} which this {@link SimpleChannelInboundHandler}

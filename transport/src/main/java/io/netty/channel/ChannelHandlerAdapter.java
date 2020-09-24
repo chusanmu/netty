@@ -39,6 +39,8 @@ public abstract class ChannelHandlerAdapter implements ChannelHandler {
     }
 
     /**
+     *TODO: 判断这个handler是否是共享的
+     *
      * Return {@code true} if the implementation is {@link Sharable} and so can be added
      * to different {@link ChannelPipeline}s.
      */
@@ -52,12 +54,18 @@ public abstract class ChannelHandlerAdapter implements ChannelHandler {
          * See <a href="https://github.com/netty/netty/issues/2289">#2289</a>.
          */
         Class<?> clazz = getClass();
+        // TODO: 这里维护了一个 cache
         Map<Class<?>, Boolean> cache = InternalThreadLocalMap.get().handlerSharableCache();
+        // TODO: 从缓存中把cache的结果拿到
         Boolean sharable = cache.get(clazz);
+        // TODO: 如果没有，那就去使用反射判断
         if (sharable == null) {
+            // TODO: 判断这个 class上面是否有 Sharable 注解
             sharable = clazz.isAnnotationPresent(Sharable.class);
+            // TODO: 然后把结果缓存起来
             cache.put(clazz, sharable);
         }
+        // TODO: 返回结果
         return sharable;
     }
 

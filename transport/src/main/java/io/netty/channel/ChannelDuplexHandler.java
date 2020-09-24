@@ -20,6 +20,7 @@ import io.netty.channel.ChannelHandlerMask.Skip;
 import java.net.SocketAddress;
 
 /**
+ * TODO: 即是一个inboundHandler 又是一个 outboundHandler, 这也是一个很重要的类
  * {@link ChannelHandler} implementation which represents a combination out of a {@link ChannelInboundHandler} and
  * the {@link ChannelOutboundHandler}.
  *

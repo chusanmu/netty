@@ -57,6 +57,8 @@ public interface EventExecutor extends EventExecutorGroup {
     <V> ProgressivePromise<V> newProgressivePromise();
 
     /**
+     * TODO: 创建一个成功的future
+     *
      * Create a new {@link Future} which is marked as succeeded already. So {@link Future#isSuccess()}
      * will return {@code true}. All {@link FutureListener} added to it will be notified directly. Also
      * every call of blocking methods will just return without blocking.

@@ -22,6 +22,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * TODO: 事件执行组，继承了 JUC里面的调度线程池
  * The {@link EventExecutorGroup} is responsible for providing the {@link EventExecutor}'s to use
  * via its {@link #next()} method. Besides this, it is also responsible for handling their
  * life-cycle and allows shutting them down in a global fashion.
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<EventExecutor> {
 
     /**
+     * TODO: 判断线程池是否关闭了
      * Returns {@code true} if and only if all {@link EventExecutor}s managed by this {@link EventExecutorGroup}
      * are being {@linkplain #shutdownGracefully() shut down gracefully} or was {@linkplain #isShutdown() shut down}.
      */
@@ -85,6 +87,8 @@ public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<E
 
     @Override
     Iterator<EventExecutor> iterator();
+
+    /* ---------------- 一系列的线程调度方法 -------------- */
 
     @Override
     Future<?> submit(Runnable task);

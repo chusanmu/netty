@@ -20,6 +20,8 @@ import io.netty.channel.ChannelHandlerMask.Skip;
 import java.net.SocketAddress;
 
 /**
+ * TODO: 出站处理器适配器，也都是直接调用 channelHandlerContext里面的方法
+ *
  * Skeleton implementation of a {@link ChannelOutboundHandler}. This implementation just forwards each method call via
  * the {@link ChannelHandlerContext}.
  */

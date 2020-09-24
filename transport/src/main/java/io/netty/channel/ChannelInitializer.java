@@ -88,12 +88,14 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
         if (initChannel(ctx)) {
             // we called initChannel(...) so we need to call now pipeline.fireChannelRegistered() to ensure we not
             // miss an event.
+            // TODO: 这里又触发了一次 channelRegistered事件，主要是防止有漏的handler没有执行
             ctx.pipeline().fireChannelRegistered();
 
             // We are done with init the Channel, removing all the state for the Channel now.
             removeState(ctx);
         } else {
             // Called initChannel(...) before which is the expected behavior, so just forward the event.
+            // TODO: 否则直接执行向下传播channelRegistered事件
             ctx.fireChannelRegistered();
         }
     }
