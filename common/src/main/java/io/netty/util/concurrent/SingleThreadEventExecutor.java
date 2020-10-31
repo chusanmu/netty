@@ -398,10 +398,13 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         boolean ranAtLeastOne = false;
 
         do {
+            // TODO: 从ScheduledTaskQueue中拿task然后放到taskQueue中
             fetchedAll = fetchFromScheduledTaskQueue();
+            // TODO: 这里这个方法里面有个for的死循环，直到没有任务存在的时候 才结束
             if (runAllTasksFrom(taskQueue)) {
                 ranAtLeastOne = true;
             }
+            // TODO: 直到将ScheduledTaskQueue中的任务全部拿到taskQueue中，这时候才结束
         } while (!fetchedAll); // keep on processing until we fetched all scheduled tasks.
 
         if (ranAtLeastOne) {

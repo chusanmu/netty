@@ -445,6 +445,7 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
                 }
                 // TODO: 记录可读长度
                 int oldInputLength = in.readableBytes();
+                // TODO: 去decode解码
                 decodeRemovalReentryProtection(ctx, in, out);
 
                 // Check if this handler was removed before continuing the loop.
@@ -464,13 +465,13 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
                         continue;
                     }
                 }
-                // TODO: 读到了数据，但是没从in 里面解析啊，有问题
+                // TODO: 读到了数据，但是没从in 里面解析啊，有问题，没有从byteBuf里面读任何数据 但是给返回了一个message
                 if (oldInputLength == in.readableBytes()) {
                     throw new DecoderException(
                             StringUtil.simpleClassName(getClass()) +
                                     ".decode() did not read anything but decoded a message.");
                 }
-
+                // TODO: 判断是不是只解码一次，如果是，那就break掉
                 if (isSingleDecode()) {
                     break;
                 }
@@ -509,6 +510,7 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
             throws Exception {
         decodeState = STATE_CALLING_CHILD_DECODE;
         try {
+            // TODO: 解码方法，解码完了之后，如果状态是 STATE_HANDLER_REMOVED_PENDING 会接着向下传播读事件
             decode(ctx, in, out);
         } finally {
             boolean removePending = decodeState == STATE_HANDLER_REMOVED_PENDING;

@@ -131,6 +131,7 @@ public abstract class MessageToByteEncoder<I> extends ChannelOutboundHandlerAdap
                 }
                 buf = null;
             } else {
+                // TODO: 如果类型不匹配，不支持，那就直接写出
                 ctx.write(msg, promise);
             }
         } catch (EncoderException e) {
@@ -138,6 +139,7 @@ public abstract class MessageToByteEncoder<I> extends ChannelOutboundHandlerAdap
         } catch (Throwable e) {
             throw new EncoderException(e);
         } finally {
+            // TODO: 最后buffer不为空,就进行释放内存
             if (buf != null) {
                 buf.release();
             }

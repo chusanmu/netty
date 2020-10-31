@@ -421,13 +421,14 @@ public class LengthFieldBasedFrameDecoder extends ByteToMessageDecoder {
         }
         // TODO: 长度域 绝对位置偏移量
         int actualLengthFieldOffset = in.readerIndex() + lengthFieldOffset;
-        // TODO: 长度域
+        // TODO: 长度域, 根据长度域实际类型，读取响应的字节数
         long frameLength = getUnadjustedFrameLength(in, actualLengthFieldOffset, lengthFieldLength, byteOrder);
 
+        // TODO: 长度域中读出来的值是个负数，会抛出异常
         if (frameLength < 0) {
             failOnNegativeLengthField(in, frameLength, lengthFieldEndOffset);
         }
-        // TODO: 加上调整的长度
+        // TODO: 加上调整的长度，实际长度+调整的长度
         frameLength += lengthAdjustment + lengthFieldEndOffset;
         // TODO: 数据包 连长度域的值 都没超过
         if (frameLength < lengthFieldEndOffset) {
@@ -442,7 +443,7 @@ public class LengthFieldBasedFrameDecoder extends ByteToMessageDecoder {
 
         // never overflows because it's less than maxFrameLength
         int frameLengthInt = (int) frameLength;
-        // TODO: 读取可读数据Int
+        // TODO: 读取可读数据Int，没有到达frameLength
         if (in.readableBytes() < frameLengthInt) {
             return null;
         }
@@ -450,6 +451,7 @@ public class LengthFieldBasedFrameDecoder extends ByteToMessageDecoder {
         if (initialBytesToStrip > frameLengthInt) {
             failOnFrameLengthLessThanInitialBytesToStrip(in, frameLength, initialBytesToStrip);
         }
+        // TODO: 跳过字节数
         in.skipBytes(initialBytesToStrip);
 
         // extract frame
